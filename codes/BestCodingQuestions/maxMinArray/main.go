@@ -15,7 +15,29 @@ func findMaxMinOfArray(arr []int) (max, min int) {
 	}
 	return max, min
 }
+func secondLargest(a []int) int {
+	max := 0
+	secondMax := 0
+	for i := range a {
+		if a[i] > max {
+			max = a[i]
+
+		} else {
+			if a[i] > secondMax {
+				secondMax = a[i]
+			}
+		}
+	}
+	return secondMax
+}
+func average(a []int) int {
+	sum := 0
+	for i := range a {
+		sum += a[i]
+	}
+	return sum / len(a)
+}
 func main() {
-	arr := []int{7, 3, 8, 6, 9, 11, 0, 13, 12}
-	fmt.Println(findMaxMinOfArray(arr))
+	arr := []int{7, 3, 18, 6, 9, 11, 20, 13, 12}
+	fmt.Println(average(arr))
 }
