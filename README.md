@@ -120,7 +120,47 @@ func moveZeroes(arr []int) []int {
 }
 ```
 - Rotate an array to the right by k steps.
+```go
+func rotateKStepsRight(a []int, k int) []int {
+	part := a[:k]
+	a = a[k:]
+	a = append(a, part...)
+	return a
+}
+```
 - Two Sum
+```go
+func twoSum(arr []int, target int) (int, int) {
+	for i := 1; i < len(arr); i++ { // Adjacent Sum check
+		if arr[i-1]+arr[i] == target {
+			return i, i + 1
+		}
+	}
+	for r := len(arr) - 1; r > 0; r-- { // Check every sequences
+		l := 0
+		for l < r {
+			if arr[l]+arr[r] == target {
+				return l, r
+			}
+			l++
+		}
+	}
+	return 0, 0
+}
+func twoSumOpt(arr []int, target int) (int, int) {
+	hmap := make(map[int]int)
+	for i := range arr {
+		complement := target - arr[i]
+		k, v := hmap[complement]
+		if v {
+			return i, k
+		} else {
+			hmap[arr[i]] = i
+		}
+	}
+	return -1, -1
+}
+```
 - Product of Array Except Self
 - Maximum Subarray
 - Find the Missing Number
@@ -174,6 +214,7 @@ func moveZeroes(arr []int) []int {
 - Sort an array using Merge Sort.
 - Sort an array using Quick Sort.
 ### DP
+- Subset Sum
 - Climbing Stairs
 - Longest Common Subsequence
 - Coin Change
