@@ -162,22 +162,177 @@ func twoSumOpt(arr []int, target int) (int, int) {
 }
 ```
 - Product of Array Except Self
-- Maximum Subarray
+```go
+func productOfArrayExceptSelf(a []int) []int {
+	var outArr []int
+	for i := 0; i < len(a); i++ {
+		prod := 1
+		for j := 0; j < len(a); j++ {
+			if j == i {
+				continue
+			}
+			prod = prod * a[j]
+		}
+		outArr = append(outArr, prod)
+	}
+	return outArr
+}
+```
 - Find the Missing Number
+```go
+func missingNumber(a []int) int {
+	length := len(a) + 1
+	actualSum := length * (length + 1) / 2
+	sum := 0
+	for i := range a {
+		sum += a[i]
+	}
+	missingNum := actualSum - sum
+	return missingNum
+}
+```
+- Maximum Subarray
+
 ### Strings
 - Reverse a string.
+```go
+func reverseString(s string) string {
+	arr := []rune(s)
+	l := 0
+	r := len(arr) - 1
+	for l < r {
+		t := arr[l]
+		arr[l] = arr[r]
+		arr[r] = t
+		l++
+		r--
+	}
+	return string(arr)
+}
+```
 - Check if a string is a palindrome.
+```go
+func palindrome(s string) bool {
+	arr := []rune(s)
+	l := 0
+	r := len(arr) - 1
+	for l < r {
+		if arr[l] != arr[r] {
+			return false
+		}
+		l++
+		r--
+	}
+	return true
+}
+```
 - Count the number of vowels in a string.
+```go
+func noOfVowels(s string) int {
+	arr := []rune(strings.ToLower(s))
+	count := 0
+	for i := 0; i < len(arr); i++ {
+		if arr[i] == rune('a') || arr[i] == rune('e') || arr[i] == rune('i') || arr[i] == rune('o') || arr[i] == rune('u') {
+			count++
+		}
+	}
+	return count
+}
+```
 - Find the length of the longest substring without repeating characters.
+```go
+func longestSubstringWithoutRepeat(s string) int {
+	arr := []rune(s)
+	uni := make(map[rune]int)
+	count := 0
+	for i := 0; i < len(arr); i++ {
+		_, ok := uni[arr[i]]
+		if ok {
+			return count
+		}
+		uni[arr[i]] = 0
+		count++
+	}
+	return count
+}
+```
 - Check if two strings are anagrams.
-- Convert a string to lowercase/uppercase.
-- Remove all spaces from a string.
+```go
+func anagram(s1 string, s2 string) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	arr1 := []rune(s1)
+	arr2 := []rune(s2)
+	m1 := make(map[rune]int)
+	m2 := make(map[rune]int)
+
+	for i := 0; i < len(arr1); i++ {
+		v, ok := m1[arr1[i]]
+		if ok {
+
+			m1[arr1[i]] = v + 1
+		} else {
+			m1[arr1[i]] = 0
+		}
+		v, ok = m2[arr2[i]]
+		if ok {
+
+			m2[arr2[i]] = v + 1
+		} else {
+			m2[arr2[i]] = 0
+		}
+	}
+	for k, v1 := range m1 {
+		v2, ok := m2[k]
+		if ok && v1 != v2 {
+			return false
+		}
+	}
+	return true
+}
+```
 - Find the first non-repeated character in a string.
+```go
+func nonRepeatingFirstChar(s string) string {
+	arr := []rune(s)
+	m := make(map[rune]int)
+	for i := 0; i < len(arr); i++ {
+		v, ok := m[arr[i]]
+		if ok {
+			m[arr[i]] = v + 1
+		} else {
+			m[arr[i]] = 0
+		}
+	}
+	for _, v := range s {
+		if m[v] == 0 {
+			return string(v)
+		}
+	}
+	return ""
+}
+```
 - Find all permutations of a string.
 - Check if a string contains all unique characters.
+```go
+func checkUnique(s string) bool {
+	arr := []rune(s)
+	m := make(map[rune]int)
+	for i := range arr {
+		v, ok := m[arr[i]]
+		if ok {
+			m[arr[i]] = v + 1
+			return false
+		} else {
+			m[arr[i]] = 0
+		}
+	}
+	return true
+}
+```
 - Longest Common Prefix
 - Valid Parentheses
-- Anagrams
 ### Linked Lists
 - Print all elements in a linked list.
 - Find the length of a linked list.
