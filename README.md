@@ -332,13 +332,99 @@ func checkUnique(s string) bool {
 }
 ```
 - Longest Common Prefix
-- Valid Parentheses
+
 ### Linked Lists
 - Print all elements in a linked list.
-- Find the length of a linked list.
-- Insert a node at the beginning of a linked list.
-- Insert a node at the end of a linked list.
-- Delete a node from a linked list.
+```go
+type Node struct {
+	data  int
+	right *Node
+}
+
+type list struct {
+	Nodes *Node
+}
+
+func NewList() *list {
+	return &list{}
+}
+func (l *list) Add(d int) {
+	node := Node{
+		data: d,
+	}
+	if l.Nodes == nil {
+		l.Nodes = &node
+		return
+	}
+	c := l.Nodes
+	for c.right != nil {
+		c = c.right
+	}
+	c.right = &node
+}
+func (l *list) Remove(n int) {
+	if l.Nodes == nil {
+		return
+	}
+	c := l.Nodes
+	for i := 0; i < n-1; i++ {
+		if c.right != nil {
+			c = c.right
+		}
+	}
+	if c.right.right != nil {
+		c.right = c.right.right
+	}
+}
+func (l *list) print() {
+	c := l.Nodes
+	for c.right != nil {
+		fmt.Println(c.data)
+		c = c.right
+	}
+	fmt.Println(c.data)
+	fmt.Println("------------------------")
+}
+func (l *list) NthAdd(d int, n int) {
+	node := Node{
+		data: d,
+	}
+	if l.Nodes == nil {
+		l.Nodes = &node
+	}
+	if n == 0 {
+		node.right = l.Nodes
+		l.Nodes = &node
+	}
+
+	c := l.Nodes
+	for i := 0; i < n-1; i++ {
+		if c.right != nil {
+			c = c.right
+		}
+	}
+	node.right = c.right
+	c.right = &node
+}
+func main() {
+	l := NewList()
+	l.Add(2)
+	l.Add(4)
+	l.Add(6)
+	l.Add(9)
+	l.Add(12)
+	l.Add(16)
+	l.print()
+	l.NthAdd(17, 8)
+	l.print()
+	l.NthAdd(14, 3)
+	l.print()
+	l.Remove(3)
+	l.print()
+	l.Remove(2)
+	l.print()
+}
+```
 - Find a node by its value.
 - Reverse a linked list.
 - Check if a linked list is cyclic.
@@ -348,6 +434,58 @@ func checkUnique(s string) bool {
 - Remove Nth Node From End of List
 ### Stacks Queues
 - Implement a stack using an array.
+```go
+type stack struct {
+	d []string
+}
+
+func NewStack(d []string) *stack {
+	return &stack{
+		d: d,
+	}
+}
+func (s *stack) push(data string) {
+	s.d = append(s.d, data)
+}
+func (s *stack) pop() string {
+	if len(s.d) < 1 {
+		return ""
+	}
+	t := s.d[len(s.d)-1]
+	s.d = s.d[:len(s.d)-1]
+	return t
+}
+```
+- Valid Parentheses
+```go
+func validParenthesesCheck(arr []string) bool {
+	o := NewStack([]string{})
+	m := make(map[string]string)
+	m["{"] = "}"
+	m["["] = "]"
+	m["("] = ")"
+	m["}"] = "{"
+	m["]"] = "["
+	m[")"] = "("
+	for i := 0; i < len(arr); i++ {
+		char := arr[i]
+		if len(o.d) > 0 {
+			oelem := o.pop()
+			if m[char] != oelem {
+				o.push(oelem)
+				o.push(char)
+			}
+		} else {
+			o.push(char)
+		}
+	}
+	if len(o.d) == 0 {
+		return true
+	} else {
+		return false
+	}
+}
+```
 - Implement a stack using a linked list.
 - Check for balanced parentheses in an expression.
 - Sort a stack using another stack.
