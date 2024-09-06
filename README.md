@@ -512,3 +512,1118 @@ func validParenthesesCheck(arr []string) bool {
 - Longest Common Subsequence
 - Coin Change
 - Longest Common Prefix
+
+## Docker and Kubernetis:
+Docker is a platform that automate the deployment of applications inside lightweight, portable containers. 
+
+Containers package up everything like code, runtime, system tools, libraries, and settings, that an application needs for runing, so it runs consistently across different computing environments.
+
+Basic Concepts:
+
+Image: A snapshot of a filesystem. An image contains everything needed to run an application: code, runtime, libraries, and environment variables. Images are read-only.
+
+Container: A running instance of an image. Containers can write to their own filesystem (but not to the image) and have a writable layer on top of the image.
+
+Dockerfile: A script with a set of instructions on how to build a Docker image. It specifies the base image, the application code, and any additional dependencies or configurations.
+
+Docker Hub: A cloud-based registry where Docker images are stored and shared.
+
+Install docker:
+```bash
+sudo apt install docker.io
+```
+Check Docker Version:
+```bash
+docker --version
+```
+Stop Docker:
+```bash
+sudo systemctl stop docker
+```
+Start Docker (if not already running):
+```bash
+sudo systemctl start docker
+```
+Lists all Docker images available locally.
+```bash
+docker images
+```
+Search for images on Docker Hub:
+```bash
+docker search <term>
+```
+List all containers with their status:
+```bash
+docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"
+```
+Downloads an image from a Docker registry (e.g., Docker Hub).
+```bash
+docker pull <image>:<tag>
+docker pull nginx:latest
+```
+Build or Creates a Docker image from a Dockerfile.
+```bash
+docker build -t <image>:<tag> <path>
+docker build -t my-image:latest .
+```
+Deletes a Docker image from the local system.
+```bash
+docker rmi <image>:<tag>
+docker rmi nginx:latest
+```
+Starts a new container from an image and optionally executes a command.
+```bash
+docker run [OPTIONS] <image>:<tag>
+docker run -d -p 80:80 --name webserver nginx
+```
+Shows a list of all currently running containers.
+```bash
+docker ps
+```
+Lists all containers, including those that are stopped.
+```bash
+docker ps -a
+```
+Stops a running container.
+```bash
+docker stop <container>
+```
+Start a stopped container:
+```bash
+docker start <container>
+```
+Restart a container:
+```bash
+docker restart <container>
+```
+Deletes a stopped container.
+```bash
+docker rm <container>
+```
+View logs from a container:
+```bash
+docker logs <container>
+```
+Execute a command in a running container: opens a Bash shell in the container
+```bash
+docker exec -it <container> <command>
+docker exec -it webserver /bin/bash
+```
+Attach to a running container:
+```bash
+docker attach <container>
+```
+Inspect a Container or Image :  Provides detailed information about a container or image in JSON format.
+```bash
+docker inspect <container-id or image-id>
+docker inspect d9b100f2f636
+```
+Tag an Image: Creates a new tag for an existing image.
+```bash
+docker tag <source-image> <target-image>
+docker tag my-app:latest my-app:v1.0
+```
+Removes images that are not used by any containers.
+```bash
+docker image prune
+```
+Create a volume:
+```bash
+docker volume create <volume>
+```
+List volumes:
+```bash
+docker volume ls
+```
+Inspect a volume:
+```bash
+docker volume inspect <volume>
+```
+Remove a volume:
+```bash
+docker volume rm <volume>
+```
+List networks:
+```bash
+docker network ls
+```
+Create a network:
+```bash
+docker network create <network>
+```
+Inspect a network:
+```bash
+docker network inspect <network>
+```
+Remove a network:
+```bash
+docker network rm <network>
+```
+Check Docker system information:
+```bash
+docker info
+```
+Clean up unused Docker objects:
+```bash
+docker system prune
+```
+List all Docker resources:
+```bash
+docker system df
+```
+Start services defined in a docker-compose.yml file:
+```bash
+docker-compose up
+```
+Start services in detached mode:
+```bash
+docker-compose up -d
+```
+Stop services:
+```bash
+docker-compose down
+```
+List services:
+```bash
+docker-compose ps
+```
+Build or rebuild services:
+```bash
+docker-compose build
+```
+View logs from services:
+```bash
+docker-compose logs
+```
+#### Run Mongodb:
+```bash
+docker network create my-network
+```
+```bash
+docker volume create mongodb-data
+```
+```bash
+docker run -d \ 
+# -d runs the container in detached mode.
+  --name mongodb \ 
+  # --name mongodb gives the container a name.
+  --network my-network \ 
+  # --network my-network connects the container to the network (if you created one).
+  -v mongodb-data:/data/db \ 
+  # -v mongodb-data:/data/db mounts the volume mongodb-data to /data/db in the container, which is where MongoDB stores its data.
+  -p 27017:27017 \ 
+  # -p 27017:27017 maps port 27017 on the host to port 27017 in the container.
+  mongo:latest 
+  # mongo:latest specifies the MongoDB image to use
+```
+
+```bash
+docker exec -it mongodb mongo
+```
+```bash
+docker stop mongodb
+```
+#### Run Postgres:
+```bash
+docker volume create postgres-data
+```
+```bash
+docker run -d \
+  --name postgres \
+  -v postgres-data:/var/lib/postgresql/data \
+  -e POSTGRES_USER=myuser \
+  -e POSTGRES_PASSWORD=mypassword \
+  -e POSTGRES_DB=mydatabase \
+  -p 5432:5432 \
+  postgres:latest
+```
+
+```bash
+docker exec -it postgres psql -U myuser -d mydatabase
+```
+```bash
+docker stop postgres
+```
+#### Dockerfile
+A Dockerfile is a script containing a series of instructions on how to build a Docker image. Each instruction in the Dockerfile creates a new layer in the Docker image, which is then used to build and run containers.
+
+Dockerfile Commands
+```bash
+FROM:
+Definition: Specifies the base image for the new image.
+Example: FROM ubuntu:20.04
+```
+```bash
+RUN:
+Definition: Executes a command during the image build process.
+Example: RUN apt-get update && apt-get install -y nginx
+```
+```bash
+COPY:
+Definition: Copies files from the host to the image.
+Example: COPY index.html /usr/share/nginx/html/
+```
+```bash
+CMD:
+Definition: Provides the default command to run when a container starts.
+Example: CMD ["nginx", "-g", "daemon off;"]
+```
+```bash
+EXPOSE:
+Definition: Documents the port on which the container will listen.
+Example: EXPOSE 80
+```
+```bash
+ENTRYPOINT:
+Definition: Configures a container to run as an executable.
+Example: ENTRYPOINT ["nginx", "-g", "daemon off;"]
+```
+
+#### Dockerfile for a Go Application:
+```bash
+# Stage 1: Build the Go binary
+FROM golang:1.20 AS builder
+
+# Set the Current Working Directory inside the container
+WORKDIR /app
+
+# Copy the Go Modules manifests
+COPY go.mod go.sum ./
+
+# Download the Go Modules dependencies
+RUN go mod download
+
+# Copy the source code into the container
+COPY . .
+
+# Build the Go binary
+RUN go build -o myapp .
+
+# Stage 2: Create a smaller image with the Go binary
+FROM debian:bullseye-slim
+
+# Install necessary libraries (e.g., for SSL)
+RUN apt-get update && apt-get install -y ca-certificates
+
+# Set the Current Working Directory inside the container
+WORKDIR /root/
+
+# Copy the Go binary from the previous stage
+COPY --from=builder /app/myapp .
+
+# Expose port 8080 (or any port your application uses)
+EXPOSE 8080
+
+# Command to run the binary
+CMD ["./myapp"]
+```
+
+#### Dockerfile for Redis
+```bash
+# Use the official Redis image from Docker Hub
+FROM redis:latest
+
+# Expose the default Redis port
+EXPOSE 6379
+
+# The Redis image already has a default entrypoint, so no CMD needed
+```
+#### Dockerfile for RabbitMQ
+```bash
+# Use the official RabbitMQ image with the management plugin
+FROM rabbitmq:3-management
+
+# Expose the default RabbitMQ ports
+EXPOSE 5672 15672
+
+# The RabbitMQ image already has a default entrypoint, so no CMD needed
+```
+
+#### Dockerfile for MongoDB:
+```bash
+# Use the official MongoDB image from Docker Hub
+FROM mongo:latest
+
+# Expose port 27017, the default port for MongoDB
+EXPOSE 27017
+
+# Optionally, you can add a default database or collection setup script
+# COPY init-mongo.js /docker-entrypoint-initdb.d/
+
+# The MongoDB image already has a default entrypoint, so no CMD needed
+
+```
+#### docker-compose.yml:
+```yaml
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - mynetwork
+
+volumes:
+  mongodb_data:
+
+networks:
+  mynetwork:
+```
+#### docker-compose.yml:
+```yaml
+version: '3.8'
+services:
+  golang:
+    build: .
+    container_name: golang_app
+    ports:
+      - "8080:8080"
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+```
+#### docker-compose.yml:
+```yaml
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mynetwork
+
+volumes:
+  postgres_data:
+
+networks:
+  mynetwork:
+```
+#### docker-compose.yml:
+```yaml
+version: '3.8'
+services:
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - mynetwork
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  mynetwork:
+```
+#### docker-compose.yml:
+```yaml
+version: '3.8'
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - mynetwork
+
+volumes:
+  redis_data:
+
+networks:
+  mynetwork:
+```
+
+Create a directory for each service and place the respective docker-compose.yml and configuration files in that directory.
+
+Run Docker Compose in each directory: This command will start the containers based on the configuration files.
+```bash
+docker-compose up
+```
+Access Services:
+
+`MongoDB`: mongodb://localhost:27017
+`PostgreSQL`: postgresql://user:password@localhost:5432/mydatabase
+`RabbitMQ`: Management UI at http://localhost:15672 (default username/password: guest/guest)
+`Redis`: redis://localhost:6379
+
+
+#### Kubernetes 
+Kubernetes is a powerful open-source platform designed to automate deploying, scaling, and managing containerized applications.  Kubernetes uses YAML files to define resources.
+
+Basic Concepts
+Cluster: A set of nodes (machines) that run containerized applications managed by Kubernetes.
+
+Node: A single machine (virtual or physical) that is part of a Kubernetes cluster. Each node runs a container runtime (like Docker), and necessary services to manage containers.
+
+Pod: The smallest deployable unit in Kubernetes, consisting of one or more containers that share storage, networking, and a specification for how to run the containers.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+```
+Service: An abstraction that defines a logical set of Pods and a policy to access them, typically using a stable IP address and DNS name.
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+spec:
+  type: LoadBalancer
+  selector:
+    app: myapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+```
+Deployment: A controller that manages the deployment of Pods, ensuring the desired number of replicas are running at any time.
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: mycontainer
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+```
+Namespace: A way to divide cluster resources between multiple users or applications, providing a scope for names.
+
+View Cluster Information:
+```bash
+kubectl cluster-info
+```
+Get Cluster Nodes:
+```bash
+kubectl get nodes
+```
+Get Cluster Info:
+```bash
+kubectl cluster-info
+```
+List Pods:
+```bash
+kubectl get pods
+```
+Get Pod Details:
+```bash
+kubectl describe pod pod_name
+```
+View Pod Logs:
+```bash
+kubectl logs pod_name
+```
+Execute Command in a Pod:
+```bash
+kubectl exec -it pod_name -- /bin/bash
+```
+Delete a Pod:
+```bash
+kubectl delete pod pod_name
+```
+List Services:
+```bash
+kubectl get services
+```
+Describe Service:
+```bash
+kubectl describe service service_name
+```
+Expose a Pod as a Service:
+```bash
+kubectl expose pod pod_name --type=LoadBalancer --port=80 --target-port=8080
+```
+Create a Deployment:
+```bash
+kubectl create deployment deployment_name --image=image_name:tag
+```
+List Deployments:
+```bash
+kubectl get deployments
+```
+Scale a Deployment:
+```bash
+kubectl scale deployment deployment_name --replicas=3
+```
+Update a Deployment:
+```bash
+kubectl set image deployment/deployment_name container_name=image_name:tag
+```
+Roll Back a Deployment:
+```bash
+kubectl rollout undo deployment/deployment_name
+```
+Get Deployment Details:
+```bash
+kubectl describe deployment deployment_name
+```
+Delete a Deployment:
+```bash
+kubectl delete deployment deployment_name
+```
+List Namespaces:
+```bash
+kubectl get namespaces
+```
+Create a Namespace:
+```bash
+kubectl create namespace namespace_name
+```
+Delete a Namespace:
+```bash
+kubectl delete namespace namespace_name
+```
+Apply Configuration from a File:
+```bash
+kubectl apply -f file_name.yaml
+```
+Delete Resources Defined in a File:
+```bash
+kubectl delete -f file_name.yaml
+```
+Get Resource Usage (CPU/Memory):
+```bash
+kubectl top nodes
+kubectl top pods
+```
+Inspect Resource Details:
+```bash
+kubectl get all
+kubectl describe pod pod_name
+```
+Port Forwarding:
+```bash
+kubectl port-forward pod_name local_port:container_port
+```
+#### Let's go through a detailed example of orchestrating a microservices architecture with Kubernetes, where each microservice is written in Go and uses different databases or messaging systems.
+
+We'll create three Go microservices:
+
+Service A: Uses MongoDB.
+Service B: Uses PostgreSQL.
+Service C: Uses Redis and RabbitMQ.
+
+Each service will be containerized and deployed on Kubernetes.
+
+Service A: MongoDB
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+func main() {
+	clientOptions := options.Client().ApplyURI("mongodb://mongodb:27017")
+	client, err := mongo.Connect(context.Background(), clientOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		collection := client.Database("testdb").Collection("testcol")
+		result := collection.FindOne(context.Background(), map[string]interface{}{"name": "test"})
+		var document map[string]interface{}
+		if err := result.Decode(&document); err != nil {
+			http.Error(w, "Error fetching data", http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprintf(w, "Document: %v", document)
+	})
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+```
+
+Service B: PostgreSQL
+
+```go
+package main
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"net/http"
+
+	_ "github.com/lib/pq"
+)
+
+func main() {
+	connStr := "user=postgres password=password dbname=testdb host=postgres port=5432 sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		row := db.QueryRow("SELECT data FROM test_table WHERE id = $1", 1)
+		var data string
+		if err := row.Scan(&data); err != nil {
+			http.Error(w, "Error fetching data", http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprintf(w, "Data: %s", data)
+	})
+
+	log.Fatal(http.ListenAndServe(":8081", nil))
+}
+```
+
+Service C: Redis and RabbitMQ
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/streadway/amqp"
+	"golang.org/x/net/context"
+)
+
+func main() {
+	// Redis
+	rdb := redis.NewClient(&redis.Options{
+		Addr: "redis:6379",
+	})
+
+	// RabbitMQ
+	conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer ch.Close()
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Fetch data from Redis
+		val, err := rdb.Get(context.Background(), "key").Result()
+		if err != nil {
+			http.Error(w, "Error fetching data from Redis", http.StatusInternalServerError)
+			return
+		}
+
+		// Send message to RabbitMQ
+		err = ch.Publish(
+			"",      // exchange
+			"queue", // routing key
+			false,   // mandatory
+			false,   // immediate
+			amqp.Publishing{
+				ContentType: "text/plain",
+				Body:        []byte("Message from Go service"),
+			})
+		if err != nil {
+			http.Error(w, "Error sending message to RabbitMQ", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "Redis Value: %s", val)
+	})
+
+	log.Fatal(http.ListenAndServe(":8082", nil))
+}
+```
+
+Service A: Dockerfile:
+```bash
+FROM golang:1.20-alpine
+WORKDIR /app
+COPY main.go .
+RUN go mod init myapp && go build -o myapp
+CMD ["./myapp"]
+```
+Service B: Dockerfile:
+```bash
+FROM golang:1.20-alpine
+WORKDIR /app
+COPY main.go .
+RUN go mod init myapp && go build -o myapp
+CMD ["./myapp"]
+```
+Service C: Dockerfile:
+```bash
+FROM golang:1.20-alpine
+WORKDIR /app
+COPY main.go .
+RUN go mod init myapp && go build -o myapp
+CMD ["./myapp"]
+```
+To keep things organized, you might want to use a namespace.
+namespace.yaml:
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mynamespace
+```
+mongodb-deployment.yaml:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  namespace: mynamespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:latest
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongodb-storage
+          mountPath: /data/db
+      volumes:
+      - name: mongodb-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: mynamespace
+spec:
+  ports:
+  - port: 27017
+  selector:
+    app: mongodb
+```
+
+postgres-deployment.yaml:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: mynamespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "testdb"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "password"
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: mynamespace
+spec:
+  ports:
+  - port: 5432
+  selector:
+    app: postgres
+```
+
+redis-deployment.yaml:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: mynamespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:latest
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: mynamespace
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis
+```
+
+rabbitmq-deployment.yaml:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: mynamespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:management
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: mynamespace
+spec:
+  ports:
+  - port: 5672
+    name: amqp
+  - port: 15672
+    name: management
+  selector:
+    app: rabbitmq
+```
+service-a-deployment.yaml:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-a
+  namespace: mynamespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-a
+  template:
+    metadata:
+      labels:
+        app: service-a
+    spec:
+      containers:
+      - name: service-a
+        image: your-repo/service-a:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-a
+  namespace: mynamespace
+spec:
+  ports:
+  - port: 8080
+  selector:
+    app: service-a
+```
+service-b-deployment.yaml:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-b
+  namespace: mynamespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-b
+  template:
+    metadata:
+      labels:
+        app: service-b
+    spec:
+      containers:
+      - name: service-b
+        image: your-repo/service-b:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: POSTGRES_URI
+          value: "postgres://postgres:password@postgres:5432/testdb"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-b
+  namespace: mynamespace
+spec:
+  ports:
+  - port: 8081
+  selector:
+    app: service-b
+```
+service-c-deployment.yaml:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-c
+  namespace: mynamespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-c
+  template:
+    metadata:
+      labels:
+        app: service-c
+    spec:
+      containers:
+      - name: service-c
+        image: your-repo/service-c:latest
+        ports:
+        - containerPort: 8082
+        env:
+        - name: REDIS_URI
+          value: "redis:6379"
+        - name: RABBITMQ_URI
+          value: "amqp://guest:guest@rabbitmq:5672/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-c
+  namespace: mynamespace
+spec:
+  ports:
+  - port: 8082
+  selector:
+    app: service-c
+```
+
+Deploying to Kubernetes
+
+Apply Namespace:
+```bash
+kubectl apply -f namespace.yaml
+```
+
+Deploy Databases and Messaging Systems:
+```bash
+kubectl apply -f mongodb-deployment.yaml
+kubectl apply -f postgres-deployment.yaml
+kubectl apply -f redis-deployment.yaml
+kubectl apply -f rabbitmq-deployment.yaml
+```
+Deploy Microservices:
+```bash
+kubectl apply -f service-a-deployment.yaml
+kubectl apply -f service-b-deployment.yaml
+kubectl apply -f service-c-deployment.yaml
+```
+Verify Deployments:
+```bash
+kubectl get pods -n mynamespace
+kubectl get services -n mynamespace
+```
+Accessing Services
+To access the services externally, you may need to use a LoadBalancer or NodePort service type for your microservices, or use port forwarding for testing.
+
+Example: Port Forwarding:
+```bash
+kubectl port-forward svc/service-a 8080:8080 -n mynamespace
+```
+
+You can then access Service A at http://localhost:8080.
+
+
