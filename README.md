@@ -513,6 +513,327 @@ func validParenthesesCheck(arr []string) bool {
 - Coin Change
 - Longest Common Prefix
 
+## MongoDB and PostgreSql
+Assume we are working with this Schema
+```go
+type Status string
+
+const (
+	Pending  Status = "Pending"
+	Approved Status = "Approved"
+	Rejected Status = "Rejected"
+)
+
+type Artist struct {
+	Id   string
+	Name string
+}
+type Release struct {
+	PlatformId string
+	Status     Status
+	Artists    []Artist
+}
+type Album struct {
+	Id       string
+	Name     string
+	LabelId  string
+	Releases []Release
+}
+type Song struct {
+	Id      string
+	Name    string
+	AlbumId string
+}
+
+type Label struct {
+	Id   string
+	Name string
+}
+```
+- Find Albums by Name:
+```go
+db.album.find({"Name":"Requested Name"})
+```
+```go
+filter:=bson.M{"Name":name}
+collection.FindOne(ctx,filter).Decode(&album)
+```
+- Find Albums by Status enum:
+```go
+db.album.find({"Releases.Status":"Approved"})
+```
+```go
+filter:=bson.M{"Releases.Status":status}
+cursor,err:=collection.Find(ctx,filter)
+defer cursor.Close(ctx)
+err = cursor.All(ctx,&albums)
+```
+- Find all artists associated with a specific album:
+```go
+db.album.find({"Id":"album id"},{"Releases.Artists":1})
+```
+```go
+filter:=bson.M{"Id":albumId}
+projection:=bson.M{"Releases.Artists":1}
+err = collection.FindOne(ctx, filter, options.FindOne().SetProjection(projection)).Decode(&result)
+```
+- Find albums where at least one release has the status "Approved" and includes a specific artist (e.g., an artist with the name "Artist Name"):
+```go
+db.albums.find({
+	"Releases":{
+		"$elemmatch":{
+			"Status":"Approved",
+			"Artists.Name":"requested artist name"
+		}
+	}
+})
+```
+```go
+filter:=bson.M{
+	"Releases":bson.M{
+		"$elemmatch":bson.M{
+			"Status":status,
+			"Artists.Name":artistName
+		},
+	},
+}
+cursor, err := collection.Find(ctx, filter)
+defer cursor.Close(ctx)
+err = cursor.All(ctx, &albums)
+```
+- Count the number of albums associated with each label
+```go
+db.album.aggregate([
+	{
+		"$group":{
+			"_id":"$LabelId",
+			"count":{"$sum":1}
+		}
+	}
+])
+```
+```go
+pipeline := mongo.Pipeline{
+    {{Key: "$group", Value: bson.D{{Key: "_id", Value: "$LabelId"}, {Key: "count", Value: bson.D{{Key: "$sum", Value: 1}}}}}},
+}
+cursor, err := collection.Aggregate(ctx, pipeline)
+defer cursor.Close(ctx)
+err = cursor.All(ctx, &results)
+```
+- Find albums with more than 3 releases:
+```go
+db.album.find({
+	"Releases":{
+		"$exists": true,
+		"$not":{"$size":3}
+	}
+})
+```
+```go
+pipeline := mongo.Pipeline{
+    {{Key: "$match", Value: bson.M{"Releases": bson.M{"$exists": true}}}},
+    {{Key: "$project", Value: bson.M{"ReleasesCount": bson.M{"$size": "$Releases"}}}},
+    {{Key: "$match", Value: bson.M{"ReleasesCount": bson.M{"$gt": minReleases}}}},
+}
+cursor, err := collection.Aggregate(ctx, pipeline)
+defer cursor.Close(ctx)
+err = cursor.All(ctx, &albums)
+```
+- Find albums where at least one release is on a specific platform (e.g., "Spotify") and has a certain status (e.g., "Approved"):
+```go
+db.album.find({
+	"Releases": {
+    "$elemMatch": {
+      "PlatformId": "Spotify",
+      "Status": "Approved"
+    }
+  }
+})
+```
+```go
+filter := bson.M{
+        "Releases": bson.M{
+            "$elemMatch": bson.M{
+                "PlatformId": platformID,
+                "Status":     status,
+            },
+        },
+    }
+cursor, err := collection.Find(ctx, filter)
+defer cursor.Close(ctx)
+err = cursor.All(ctx, &albums)
+```
+- Get a list of albums with their songs:
+```go
+pipeline := mongo.Pipeline{
+    {{"$lookup", bson.D{
+        {Key: "from", Value: "songs"},
+        {Key: "localField", Value: "Releases.PlatformId"},
+        {Key: "foreignField", Value: "AlbumId"},
+        {Key: "as", Value: "songDetails"},
+    }}},
+}
+cursor, err := albumsCollection.Aggregate(ctx, pipeline)
+defer cursor.Close(ctx)
+err = cursor.All(ctx, &results)
+```
+- Get a list of albums along with their labels and songs:
+```go
+pipeline := mongo.Pipeline{
+    {{"$lookup", bson.D{
+        {Key: "from", Value: "labels"},
+        {Key: "localField", Value: "LabelId"},
+        {Key: "foreignField", Value: "Id"},
+        {Key: "as", Value: "labelDetails"},
+    }}},
+    {{"$unwind", "$labelDetails"}},
+    {{"$lookup", bson.D{
+        {Key: "from", Value: "songs"},
+        {Key: "let", Value: bson.D{{Key: "albumId", Value: "$Id"}}},
+        {Key: "pipeline", Value: mongo.Pipeline{
+            {{"$match", bson.D{{Key: "$expr", Value: bson.D{{Key: "$eq", Value: bson.A{"$AlbumId", "$$albumId"}}}}}},
+        }},
+        {Key: "as", Value: "songDetails"},
+    }}},
+}
+cursor, err := albumsCollection.Aggregate(ctx, pipeline)
+defer cursor.Close(ctx)
+err = cursor.All(ctx, &results)
+```
+- Get a list of songs along with their album and label information:
+```go
+ pipeline := mongo.Pipeline{
+    {{"$lookup", bson.D{
+        {Key: "from", Value: "albums"},
+        {Key: "localField", Value: "AlbumId"},
+        {Key: "foreignField", Value: "Id"},
+        {Key: "as", Value: "albumDetails"},
+    }}},
+    {{"$unwind", "$albumDetails"}},
+    {{"$lookup", bson.D{
+        {Key: "from", Value: "labels"},
+        {Key: "localField", Value: "albumDetails.LabelId"},
+        {Key: "foreignField", Value: "Id"},
+        {Key: "as", Value: "labelDetails"},
+    }}},
+    {{"$unwind", "$labelDetails"}},
+}
+cursor, err := songsCollection.Aggregate(ctx, pipeline)
+defer cursor.Close(ctx)
+err = cursor.All(ctx, &results)
+```
+- Update Release Status in an Album
+```go
+db.albums.updateOne(
+    { "id": "album1", "releases.platformId": "platform1" },
+    { $set: { "releases.$.status": "Approved" } }
+);
+```
+```go
+filter := bson.M{
+	"id": albumId,
+	"releases.platformId": platformId,
+}
+update := bson.M{
+	"$set": bson.M{
+	"releases.$.status": newStatus,
+	},
+}
+result, err := collection.UpdateOne(context.TODO(), filter, update)
+```
+- Add a new Artist to the Artists array within a specific Release in an Album:
+```go
+db.albums.updateOne(
+    { "id": "album1", "releases.platformId": "platform1" },
+    { $push: { "releases.$.artists": { "id": "artist1", "name": "New Artist" } } }
+);
+```
+```go
+filter := bson.M{
+	"id": albumId,
+	"releases.platformId": platformId,
+}
+update := bson.M{
+	"$push": bson.M{
+	"releases.$.artists": artist,
+	},
+}
+result, err := collection.UpdateOne(context.TODO(), filter, update)
+```
+- Remove a specific Artist from the Artists array within a specific Release in an Album:
+```go
+db.albums.updateOne(
+    { "id": "album1", "releases.platformId": "platform1" },
+    { $pull: { "releases.$.artists": { "id": "artist1" } } }
+);
+```
+```go
+filter := bson.M{
+	"id": albumId,
+	"releases.platformId": platformId,
+}
+update := bson.M{
+	"$pull": bson.M{
+	"releases.$.artists": bson.M{"id": artistId},
+	},
+}
+result, err := collection.UpdateOne(context.TODO(), filter, update)
+```
+- Update multiple documents in a collection, for example, to set a status for all albums with a certain label
+```go
+db.albums.updateMany(
+    { "labelId": "label123" },
+    { $set: { "status": "Approved" } }
+);
+```
+```go
+filter := bson.M{
+	"labelId": labelId,
+}
+update := bson.M{
+	"$set": bson.M{
+		"releases.$[].status": newStatus,
+	},
+}
+result, err := collection.UpdateMany(context.TODO(), filter, update)
+```
+- Perform an upsert (update if exists, otherwise insert), use the Upsert option:
+```go
+db.albums.updateOne(
+    { "id": "album2" },
+    { $set: { "id": "album2", "name": "Another Album", "labelId": "label123", "releases": [] } },
+    { upsert: true }
+);
+```
+```go
+filter := bson.M{
+	"id": album.Id,
+}
+update := bson.M{
+	"$set": album,
+}
+opts := options.Update().SetUpsert(true)
+result, err := collection.UpdateOne(context.TODO(), filter, update, opts)
+```
+-  Incrementing a field within a document:
+```go
+db.albums.updateOne(
+    { "id": "album1" },
+    { $inc: { "releaseCount": 1 } }
+);
+```
+```go
+filter := bson.M{
+	"id": albumId,
+}
+update := bson.M{
+	"$inc": bson.M{
+	"releaseCount": 1,
+	},
+}
+result, err := collection.UpdateOne(context.TODO(), filter, update)
+```
+
 ## Docker and Kubernetis:
 Docker is a platform that automate the deployment of applications inside lightweight, portable containers. 
 
