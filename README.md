@@ -530,24 +530,22 @@ MongoDB and Redis excel in horizontal scaling, while PostgreSQL supports vertica
 ### MongoDB
 
 #### Scalability:
-- Sharding enables MongoDB to handle large volumes of data and high throughput by scaling out horizontally.
-- Each shard contains a subset of the data, distributed based on a shard key. This allows MongoDB to distribute read and write operations across shards.
-- MongoDB uses config servers to store metadata about the sharded cluster, including the mapping between shards and ranges of shard keys.
-- Config servers provide configuration and coordination services, allowing MongoDB routers (mongos instances) to direct queries to the appropriate shards based on the shard key.
-- When a client application sends a query to MongoDB, the query is routed through the `mongos` instance. The `mongos` examines the query to determine which shard(s) contain the relevant data based on the shard key.
-- `mongos` instances also manage load balancing across the shards. They distribute incoming queries evenly across shards to ensure that no individual shard becomes overwhelmed with requests, thereby optimizing performance.
-- Adding more `mongos` instances can improve the throughput and scalability of a MongoDB deployment, as they handle query routing and load balancing.
+- Sharding enables horizontal scaling.
+- Each shard contains a subset of the data, distributed based on a shard key.
+- MongoDB uses config servers to store metadata like mapping between shards and shard keys.
+- Config servers allow MongoDB routers (`mongos` instances) to send queries to the appropriate shards based on the shard key.
+- `mongos` instances also manage load balancing across the shards. They distribute incoming queries evenly across shards.
+- Adding more `mongos` instances can improve the throughput and scalability.
 - MongoDB uses replica sets to provide redundancy and automatic failover.
 - Each replica set consists of multiple nodes (typically three or more): one primary node for read and write operations and secondary nodes that replicate data from the primary. If the primary node fails, a new primary is elected from the remaining nodes in the replica set, ensuring continuous availability.
 - MongoDB’s oplog is a capped collection that records all write operations (inserts, updates, deletes) in the order they occur.
-- MongoDB replica sets support automatic failover. If the primary node becomes unavailable, a secondary node is automatically promoted to primary.
+
 #### Operations
 `$eq`: Matches values that are equal to a specified value.
 `$ne`: Matches all values that are not equal to a specified value.
 `$gt`, $gte, $lt, $lte: Greater than, greater than or equal to, less than, less than or equal to, respectively.
 `$in`: Matches any of the values specified in an array.
 `$nin`: Matches none of the values specified in an array.
-
 `$set`: Sets the value of a field in a document.
 `$unset`: Removes the specified field from a document.
 `$inc`: Increments the value of the field by a specified amount.
@@ -555,8 +553,15 @@ MongoDB and Redis excel in horizontal scaling, while PostgreSQL supports vertica
 `$addToSet`: Adds elements to an array only if they do not already exist.
 `$pull`: Removes all instances of a value from an array.
 `$rename`: Renames a field.
-
-`$unwind`: Deconstructs an array field from the input documents to output a document for each element. Imagine you have a collection where each document contains an array field. When you apply $unwind to an array field in a document, MongoDB will create separate documents where Each new document will have the same values for all other fields except the one array field, for each element of the array.
+`$project`: Reshapes documents by including, excluding, or transforming fields.
+`$elemMatch`: Matches documents that contain an array field with at least one element that matches all the specified query criteria.
+`$all`: Matches arrays that contain all elements specified in the query.
+`$size`: Matches arrays with a specific number of elements.
+`$sort`: Orders documents.
+`$limit`: Limits the number of documents.
+`$skip`: Skips a specified number of documents.
+`$match`: Filters documents.
+`$unwind`: Imagine you have a collection where each document contains an array field. When you apply $unwind to an array field in a document, MongoDB will create separate documents where Each new document will have the same values for all other fields except the one array field, for each element of the array.
 
 ```json
 {
@@ -576,7 +581,6 @@ db.products.aggregate([
 { "_id": 1, "name": "Product ABC", "tags": "tech" }
 ```
 
-`$match`: Filters documents.
 `$group`: Groups documents by a specified identifier.
 
 ```json
@@ -612,14 +616,7 @@ db.sales.aggregate([
   { $limit: 3 } # Limits the number of documents passed to the next stage.
 ]);
 ```
-`$project`: Reshapes documents by including, excluding, or transforming fields.
-`$sort`: Orders documents.
-`$limit`: Limits the number of documents.
-`$skip`: Skips a specified number of documents.
 
-`$elemMatch`: Matches documents that contain an array field with at least one element that matches all the specified query criteria.
-`$all`: Matches arrays that contain all elements specified in the query.
-`$size`: Matches arrays with a specific number of elements.
 
 `$lookup` stage in MongoDB aggregation allows you to perform a left outer join to retrieve documents from another collection and include them in your result set.
 
@@ -699,7 +696,6 @@ db.books.find(
   { score: { $meta: "textScore" } }
 ).sort({ score: { $meta: "textScore" } });
 ```
-
 
 MongoDB supports various types of indexes to accommodate different query patterns and optimize performance:
 
