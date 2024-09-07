@@ -513,7 +513,280 @@ func validParenthesesCheck(arr []string) bool {
 - Coin Change
 - Longest Common Prefix
 
-## MongoDB and PostgreSql
+## Databases
+
+Horizontal Scaling : Distributing data and workload across multiple servers or nodes.
+
+Sharding: Dividing the dataset into smaller, manageable parts called shards and distributing these shards across multiple servers. Each server (or shard) handles a subset of the data.
+
+MongoDB is a NoSql Database which is used for Concurent operations(multi-document ACID transactions) and Horizontal scalability.
+
+PostgreSQL is ideal for applications requiring strong consistency, complex joins, and analytical queries, such as financial systems, CRM applications, and data warehousing.
+
+Redis is an in-memory data structure store known for its exceptional speed and simplicity, It excels in scenarios requiring low latency and high throughput for read and write operations.
+
+MongoDB and Redis excel in horizontal scaling, while PostgreSQL supports vertical scaling better. The ability to scale horizontally can directly influence OPS(Operation Per Second) performance in distributed and large-scale applications.
+
+### MongoDB
+
+#### Scalability:
+- Sharding enables MongoDB to handle large volumes of data and high throughput by scaling out horizontally.
+- Each shard contains a subset of the data, distributed based on a shard key. This allows MongoDB to distribute read and write operations across shards.
+- MongoDB uses config servers to store metadata about the sharded cluster, including the mapping between shards and ranges of shard keys.
+- Config servers provide configuration and coordination services, allowing MongoDB routers (mongos instances) to direct queries to the appropriate shards based on the shard key.
+- When a client application sends a query to MongoDB, the query is routed through the `mongos` instance. The `mongos` examines the query to determine which shard(s) contain the relevant data based on the shard key.
+- `mongos` instances also manage load balancing across the shards. They distribute incoming queries evenly across shards to ensure that no individual shard becomes overwhelmed with requests, thereby optimizing performance.
+- Adding more `mongos` instances can improve the throughput and scalability of a MongoDB deployment, as they handle query routing and load balancing.
+- MongoDB uses replica sets to provide redundancy and automatic failover.
+- Each replica set consists of multiple nodes (typically three or more): one primary node for read and write operations and secondary nodes that replicate data from the primary. If the primary node fails, a new primary is elected from the remaining nodes in the replica set, ensuring continuous availability.
+- MongoDB’s oplog is a capped collection that records all write operations (inserts, updates, deletes) in the order they occur.
+- MongoDB replica sets support automatic failover. If the primary node becomes unavailable, a secondary node is automatically promoted to primary.
+#### Operations
+`$eq`: Matches values that are equal to a specified value.
+`$ne`: Matches all values that are not equal to a specified value.
+`$gt`, $gte, $lt, $lte: Greater than, greater than or equal to, less than, less than or equal to, respectively.
+`$in`: Matches any of the values specified in an array.
+`$nin`: Matches none of the values specified in an array.
+
+`$set`: Sets the value of a field in a document.
+`$unset`: Removes the specified field from a document.
+`$inc`: Increments the value of the field by a specified amount.
+`$push`: Adds an element to an array.
+`$addToSet`: Adds elements to an array only if they do not already exist.
+`$pull`: Removes all instances of a value from an array.
+`$rename`: Renames a field.
+
+`$unwind`: Deconstructs an array field from the input documents to output a document for each element. Imagine you have a collection where each document contains an array field. When you apply $unwind to an array field in a document, MongoDB will create separate documents where Each new document will have the same values for all other fields except the one array field, for each element of the array.
+
+```json
+{
+  "_id": 1,
+  "name": "Product ABC",
+  "tags": ["electronics", "smartphone", "tech"]
+}
+```
+```go
+db.products.aggregate([
+  { $unwind: "$tags" }
+]);
+```
+```json
+{ "_id": 1, "name": "Product ABC", "tags": "electronics" }
+{ "_id": 1, "name": "Product ABC", "tags": "smartphone" }
+{ "_id": 1, "name": "Product ABC", "tags": "tech" }
+```
+
+`$match`: Filters documents.
+`$group`: Groups documents by a specified identifier.
+
+```json
+[
+  { "_id": 1, "item": "book", "price": 10, "quantity": 2,"tags": ["school", "notebook"]  },
+  { "_id": 2, "item": "pen", "price": 5, "quantity": 5, "tags": ["school", "stationery"] },
+  { "_id": 3, "item": "book", "price": 10, "quantity": 1,"tags": ["school", "stationery"] },
+  { "_id": 4, "item": "eraser", "price": 2, "quantity": 3, "tags": ["school", "stationery"] }
+]
+```
+```go
+db.sales.aggregate([
+  {
+    $group: {
+      _id: "$item",  // Group by the "item" field
+      totalSales: { $sum: { $multiply: ["$price", "$quantity"] } }  // Calculate total sales for each item
+    }
+  }
+]);
+```
+```json
+[
+  { "_id": "book", "totalSales": 30 },
+  { "_id": "pen", "totalSales": 25 },
+  { "_id": "eraser", "totalSales": 6 }
+]
+```
+```python
+db.sales.aggregate([
+  { $match: { tags: "school" } }, #  Filters documents to pass only those that match the specified condition.
+  { $group: { _id: "$item", totalAmount: { $sum: { $multiply: ["$price", "$quantity"] } } } }, #  Groups documents by a specified identifier expression and applies accumulator expressions. Operators like $sum, $multiply, etc., perform specific computations.
+  { $sort: { totalAmount: -1 } }, #  Orders the documents.
+  { $limit: 3 } # Limits the number of documents passed to the next stage.
+]);
+```
+`$project`: Reshapes documents by including, excluding, or transforming fields.
+`$sort`: Orders documents.
+`$limit`: Limits the number of documents.
+`$skip`: Skips a specified number of documents.
+
+`$elemMatch`: Matches documents that contain an array field with at least one element that matches all the specified query criteria.
+`$all`: Matches arrays that contain all elements specified in the query.
+`$size`: Matches arrays with a specific number of elements.
+
+`$lookup` stage in MongoDB aggregation allows you to perform a left outer join to retrieve documents from another collection and include them in your result set.
+
+```json
+// Orders Collection:
+{ "_id": 1, "order_id": "A001", "product_id": 101, "quantity": 2 }
+{ "_id": 2, "order_id": "A002", "product_id": 102, "quantity": 1 }
+```
+```json
+// Products Collection:
+{ "_id": 101, "name": "Laptop", "price": 1200 }
+{ "_id": 102, "name": "Mouse", "price": 30 }
+```
+```go
+db.orders.aggregate([
+  {
+    $lookup: {
+      from: "products",
+      localField: "product_id",
+      foreignField: "_id",
+      as: "product_details"
+    }
+  }
+]);
+```
+```json
+[
+  {
+    "_id": 1,
+    "order_id": "A001",
+    "product_id": 101,
+    "quantity": 2,
+    "product_details": [
+      { "_id": 101, "name": "Laptop", "price": 1200 }
+    ]
+  },
+  {
+    "_id": 2,
+    "order_id": "A002",
+    "product_id": 102,
+    "quantity": 1,
+    "product_details": [
+      { "_id": 102, "name": "Mouse", "price": 30 }
+    ]
+  }
+]
+```
+
+`$text`: Performs text search. 
+Text search is case insensitive by default. Text search is also diacritic insensitive (e.g., "café" would match "cafe").
+MongoDB calculates a relevance score (score) for each document based on the frequency and proximity of the search terms in the indexed fields.
+
+```json
+{
+  "_id": ObjectId("60d02e9c25c156ae22df2b73"),
+  "title": "The Catcher in the Rye",
+  "author": "J.D. Salinger",
+  "genre": "Fiction",
+  "summary": "The Catcher in the Rye is a novel by J. D. Salinger, 
+  partially published in serial form in 1945–1946 and as a novel in 
+  1951. It was originally intended for adults but is often read by 
+  adolescents for its themes of angst and alienation, and as a critique on superficiality in society."
+}
+```
+```go
+// Text searches in MongoDB require a text index on the field(s) you want to search.
+db.books.createIndex({ summary: "text" });
+```
+This query searches for documents in the books collection where the summary field contains the word "adolescents".
+
+- The `$text `operator specifies that this is a text search.
+- `$search` is used to specify the search string. 
+- This query not only finds documents matching "adolescents" but also sorts them by the relevance score in descending order.
+```go
+db.books.find(
+  { $text: { $search: "adolescents" } },
+  { score: { $meta: "textScore" } }
+).sort({ score: { $meta: "textScore" } });
+```
+
+
+MongoDB supports various types of indexes to accommodate different query patterns and optimize performance:
+
+Single Field Index: Indexes on a single field of a document.
+
+Compound Index: Indexes on multiple fields within a document.
+
+Multikey Index: Indexes on arrays of values (each value in the array is indexed).
+
+Partial Indexing : Partial indexing involves creating an index on documents that satisfy a filter expression.  Indexes only those documents that match the filter, ignoring documents that do not meet the criteria. 
+By indexing only a subset of documents, you reduce the index size compared to indexing the entire collection.  Queries that match the indexed subset of documents can benefit from faster query execution because MongoDB only needs to scan the indexed subset.
+```go
+db.books.createIndex(
+  { price: 1 }, 
+  // specifies that we are creating an ascending index on the price field.
+  { partialFilterExpression: { available: true } } 
+  // specifies that the index should only include documents where the available field is true.
+);
+```
+```go
+// This query can utilize our partial index on price where 
+// available is true to efficiently retrieve and sort books that are currently available.
+db.books.find({ available: true }).sort({ price: 1 });
+```
+
+Text Index: Special index type for performing full-text searches on string content.
+
+Geospatial Index: Indexes for geospatial data, supporting queries that calculate geometries based on proximity.
+
+Hashed Index: Indexes where MongoDB hashes the indexed field's values, typically used for sharding.
+
+
+
+### $elemMatch v/s . operator:
+
+```json
+[
+  {
+    "_id": "6671d6fa65fcd889d2dc222b",
+    "name": "Company 3",
+    "employee": [
+      { "name": "Employee 0", "age": 26, "is_active": true, 
+	  "roles": ["IT", "Finance", "Law"] },
+      {  "name": "Employee 40", "age": 29, "is_active": true, 
+	  "roles": ["Sell"] }
+    ]
+  },
+  {
+    "_id": "6671d6fa65fcd889d2dc2255",
+    "name": "Company 5",
+    "employee": [
+      { "name": "Employee 8", "age": 38, "is_active": true, 
+	  "roles": [] },
+      {  "name": "Employee 11", "age": 26, "is_active": true, 
+	  "roles": ["Law"] }
+    ]
+  },
+  {
+    "_id": "6671d6fa65fcd889d2dc222a",
+    "name": "Company 4",
+    "employee": [
+      {  "name": "Employee 3", "age": 36, "is_active": true, 
+	  "roles": ["IT", "Finance", "Law"] },
+      {  "name": "Employee 80", "age": 41, "is_active": true, 
+	  "roles": ["Finance"] },
+      {  "name": "Employee 20", "age": 37, "is_active": false, 
+	  "roles": ["Finance"] }
+    ]
+  }
+]
+```
+The dot operator allows us to get a result where each of the two arrays in a document meets one condition individually, but neither array meets all conditions on its own.
+```go
+db.Company.find({"employee.age":{$gt:30},"employee.is_active":true, "employee.roles":{$in:["Law"]}});
+// Result: Company 5,Company 4 
+// Why: Employee 8 has age 38 and role nil. 
+// but Employee 11 has age 26 and role Law. 
+// This document satisfy two condition with two different array element.
+
+db.Company.find({"employee":{$elemMatch:{"age":{$gt:30},"is_active":true,"roles":{$in:["Law"]}}}});
+// Result: Company 4 
+// Why: Employee 8 has age 38 and role nil. 
+// but Employee 11 has age 26 and role Law. 
+// This document does not satisfy two condition with same array element. 
+// So Company 5 not satisfied the Criteria.
+```
+
 Assume we are working with this Schema
 ```go
 type Status string
