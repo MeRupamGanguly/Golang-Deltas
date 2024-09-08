@@ -1,5 +1,6 @@
 # Golang-Deltas
-
+## Module 1: GoLang
+## Module 2: Logic Building
 ### Arrays
 - Find the maximum/minimum element in an array.
 ```go
@@ -513,7 +514,10 @@ func validParenthesesCheck(arr []string) bool {
 - Coin Change
 - Longest Common Prefix
 
-## Databases
+
+
+
+## Module 3: Databases
 
 Horizontal Scaling : Distributing data and workload across multiple servers or nodes.
 
@@ -1102,8 +1106,459 @@ update := bson.M{
 }
 result, err := collection.UpdateOne(context.TODO(), filter, update)
 ```
+## Module 4: GRPC
+## Module 5: RabitMQ
 
-## Docker and Kubernetis:
+Setting Up RabbitMQ
+
+```bash
+docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+```
+
+RabitMq is a Message Broker which facilates communication between Distributed systems by allowing microservices to Sending and Receiving messages. It implements the Advance Message Queuing Protocol(AMQP). 
+
+RabitMq helps in Decoupling microservices by allowing then to communicate via Queues instead of each other directly. That way we can increase the Consumers according to the loads. 
+
+In RabitMQ Producer send messages. Consumer reveive messages.
+Queue act as a Buffer that stores messages until Consumer reads it.
+Exchange routes the messages to Queues based on routing rules and the type of exchange.
+Routing Key is used by Exchnages to route messages to Queues.
+
+Type of Exchanges:
+When you want a message to be routed to a specific queue then use direct exchange, that routes messages with a specific routing key to queues that are bound to the exchange with that same routing key.
+
+When you need flexible routing based on multiple criteria then use topic exchange, that routes messages to queues based on pattern matching of routing keys using wildcards.
+
+When you want to broadcast messages to multiple queues then use fanout exchange, that routes messages to all queues bound to it, regardless of the routing key.
+
+When routing decisions are based on message attributes rather than routing keys then use headers exchange that routes messages based on message header attributes. Routing is determined by matching headers to the binding criteria.
+
+Message acknowledgements are a mechanism that informs RabbitMQ whether a message has been successfully processed or not. 
+
+With automatic acknowledgements, messages are acknowledged by the broker as soon as they are delivered to the consumer. This is done by setting the autoAck parameter to true in the Consume method.  If a consumer crashes or fails to process the message, the message is lost and not requeued for processing.
+
+With manual acknowledgements, the consumer explicitly acknowledges the message after processing it. This is done by setting the autoAck parameter to false in the Consume method and using the msg.Acknowledge method to confirm that the message was processed successfully.
+
+Negative acknowledgements are used to indicate that a message was not processed successfully. This can be done with the msg.Nack method, and you can choose whether to requeue the message or discard it.
+
+Always use manual acknowledgements for critical message processing to ensure that messages are only removed from the queue after successful processing.
+
+Use RabbitMQ management tools to monitor queues, message rates, and processing statuses. This helps in identifying issues with message processing and acknowledgements.
+
+Message Persistence ensures that messages are stored on disk rather than kept only in memory. This way, even if RabbitMQ crashes, the messages are not lost and can be recovered upon restart. Writing messages to disk can impact performance, so there is a trade-off between reliability and throughput.
+
+When a Queue is Declared Durable: The queue definition is stored to disk. If RabbitMQ crashes and restarts, the queue structure will be restored. Declaring a queue as durable does not mean that the messages will be persistent unless they are also marked as persistent.
+
+To make a message persistent, set the DeliveryMode property of the amqp.Publishing structure to 2 when publishing the message. 
+
+We can use message Time-To-Live (TTL) settings to automatically remove old messages from queues that are no longer needed.
+
+
+When a message cannot be processed by its original queue, it is redirected to a dead-letter exchange based on predefined criteria. 
+Once messages are routed to the DLX, you can handle them in several ways:  Use the DLX to examine failed messages and understand why they failed. This can be useful for debugging and improving message processing logic.  Implement logic to retry processing failed messages after some time or under certain conditions. Set up alerts or monitoring to be notified when messages are routed to the DLX, allowing you to respond to issues promptly. Periodically clean up old messages from the DLX to prevent excessive disk usage and maintain system performance.
+Design retry mechanisms to handle temporary failures and reprocess messages before routing them to the DLX.
+
+You need to declare a dead-letter exchange (DLX) where messages that cannot be delivered to the original queue will be routed.
+
+```go
+// Declare a dead-letter exchange
+err = ch.ExchangeDeclare(
+    "dlx_exchange", // Exchange name
+    "direct",       // Exchange type
+    true,           // Durable
+    false,          // Auto-delete
+    false,          // Internal
+    nil,            // Arguments
+)
+if err != nil {
+    log.Fatalf("Failed to declare a DLX: %v", err)
+}
+```
+You need to declare a queue and set its x-dead-letter-exchange argument to specify the DLX.
+```go
+_, err = ch.QueueDeclare(
+    "my_queue",    // Queue name
+    true,          // Durable
+    false,         // Auto-delete
+    false,         // Exclusive
+    false,         // No-wait
+    amqp.Table{
+        "x-dead-letter-exchange": "dlx_exchange", // Specify the DLX
+    },
+)
+if err != nil {
+    log.Fatalf("Failed to declare a queue: %v", err)
+}
+```
+You also need to bind the queue to the DLX to ensure messages are routed correctly.
+```go
+// Bind the DLX to a queue
+err = ch.QueueBind(
+    "my_queue",    // Queue name
+    "",            // Routing key
+    "dlx_exchange", // Exchange name
+    false,         // No-wait
+    nil,           // Arguments
+)
+if err != nil {
+    log.Fatalf("Failed to bind queue to DLX: %v", err)
+}
+```
+Messages are typically routed to the DLX under the following conditions:
+
+When a message in the queue exceeds its Time-To-Live (TTL) and is not consumed.
+When a queue’s length exceeds its maximum limit (if configured), excess messages are moved to the DLX.
+When a message is rejected by a consumer (e.g., using msg.Nack with requeue set to false).
+When a message cannot be routed to any queue because of routing issues (e.g., when using exchanges).
+```go
+    amqp.Table{
+        "x-message-ttl": 60000, // TTL in milliseconds
+        "x-dead-letter-exchange": "dlx_exchange",
+		// OR
+		"x-max-length": 1000, // Max number of messages
+        "x-dead-letter-exchange": "dlx_exchange",
+	}
+```
+
+Example:
+- Album Service: Publish messages about album creation and updates.
+- Song Service: Publish messages about song creation and updates.
+- Notification Service: Receive and handle specific types of messages based on routing keys.
+
+A Fanout Exchange (broadcast_logs) for general announcements that should be broadcasted to all interested parties.
+
+A Direct Exchange (direct_logs) for specific messages with routing keys.
+
+Each service publishes messages to both the fanout exchange (broadcast_logs) and the direct exchange (direct_logs).
+
+The fanout exchange distributes messages to all bound queues, useful for general notifications that all consumers should receive.
+The direct exchange routes messages based on the routing key, allowing specific consumers to handle particular types of events.
+
+album_service.go
+```go
+package main
+
+import (
+    "log"
+    "github.com/streadway/amqp"
+    "encoding/json"
+)
+
+type Album struct {
+    ID     string `json:"id"`
+    Title  string `json:"title"`
+    Artist string `json:"artist"`
+}
+
+func publishMessage(ch *amqp.Channel, exchange, routingKey string, album Album) {
+    body, err := json.Marshal(album)
+    if err != nil {
+        log.Fatalf("Failed to marshal album: %v", err)
+    }
+
+    err = ch.Publish(
+        exchange,      // Exchange
+        routingKey,    // Routing key (ignored by fanout exchange)
+        false,         // Mandatory
+        false,         // Immediate
+        amqp.Publishing{
+            ContentType: "application/json",
+            Body:        body,
+            DeliveryMode: amqp.Persistent, // Make message persistent
+        },
+    )
+    if err != nil {
+        log.Fatalf("Failed to publish a message: %v", err)
+    }
+    log.Printf("Published album event to %s: %s", exchange, body)
+}
+
+func main() {
+    conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+    if err != nil {
+        log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+    }
+    defer conn.Close()
+
+    ch, err := conn.Channel()
+    if err != nil {
+        log.Fatalf("Failed to open a channel: %v", err)
+    }
+    defer ch.Close()
+
+    // Declare fanout exchange
+    err = ch.ExchangeDeclare(
+        "broadcast_logs", // Name
+        "fanout",         // Type
+        true,             // Durable
+        false,            // Auto-deleted
+        false,            // Internal
+        nil,              // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to declare fanout exchange: %v", err)
+    }
+
+    // Declare direct exchange
+    err = ch.ExchangeDeclare(
+        "direct_logs", // Name
+        "direct",      // Type
+        true,          // Durable
+        false,         // Auto-deleted
+        false,         // Internal
+        nil,           // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to declare direct exchange: %v", err)
+    }
+
+    album := Album{ID: "1", Title: "Greatest Hits", Artist: "Artist Name"}
+    
+    // Publish to direct exchange with routing key
+    publishMessage(ch, "direct_logs", "album.created", album)
+
+    // Publish to fanout exchange
+    publishMessage(ch, "broadcast_logs", "", album)
+}
+```
+
+song_service.go
+```go
+package main
+
+import (
+    "log"
+    "github.com/streadway/amqp"
+    "encoding/json"
+)
+
+type Song struct {
+    ID     string `json:"id"`
+    Title  string `json:"title"`
+    AlbumID string `json:"album_id"`
+}
+
+func publishMessage(ch *amqp.Channel, exchange, routingKey string, song Song) {
+    body, err := json.Marshal(song)
+    if err != nil {
+        log.Fatalf("Failed to marshal song: %v", err)
+    }
+
+    err = ch.Publish(
+        exchange,      // Exchange
+        routingKey,    // Routing key (ignored by fanout exchange)
+        false,         // Mandatory
+        false,         // Immediate
+        amqp.Publishing{
+            ContentType: "application/json",
+            Body:        body,
+            DeliveryMode: amqp.Persistent, // Make message persistent
+        },
+    )
+    if err != nil {
+        log.Fatalf("Failed to publish a message: %v", err)
+    }
+    log.Printf("Published song event to %s: %s", exchange, body)
+}
+
+func main() {
+    conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+    if err != nil {
+        log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+    }
+    defer conn.Close()
+
+    ch, err := conn.Channel()
+    if err != nil {
+        log.Fatalf("Failed to open a channel: %v", err)
+    }
+    defer ch.Close()
+
+    // Declare fanout exchange
+    err = ch.ExchangeDeclare(
+        "broadcast_logs", // Name
+        "fanout",         // Type
+        true,             // Durable
+        false,            // Auto-deleted
+        false,            // Internal
+        nil,              // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to declare fanout exchange: %v", err)
+    }
+
+    // Declare direct exchange
+    err = ch.ExchangeDeclare(
+        "direct_logs", // Name
+        "direct",      // Type
+        true,          // Durable
+        false,         // Auto-deleted
+        false,         // Internal
+        nil,           // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to declare direct exchange: %v", err)
+    }
+
+    song := Song{ID: "1", Title: "Hit Song", AlbumID: "1"}
+    
+    // Publish to direct exchange with routing key
+    publishMessage(ch, "direct_logs", "song.created", song)
+
+    // Publish to fanout exchange
+    publishMessage(ch, "broadcast_logs", "", song)
+}
+```
+Notification Service: It listens to both exchanges.
+It binds to the fanout exchange without specifying a routing key, so it receives all broadcast messages.
+It binds to the direct exchange with specific routing keys to process messages related to particular events.
+
+notification_service.go
+```go
+package main
+
+import (
+    "log"
+    "github.com/streadway/amqp"
+    "encoding/json"
+)
+
+func main() {
+    conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+    if err != nil {
+        log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+    }
+    defer conn.Close()
+
+    ch, err := conn.Channel()
+    if err != nil {
+        log.Fatalf("Failed to open a channel: %v", err)
+    }
+    defer ch.Close()
+
+    // Declare fanout exchange
+    err = ch.ExchangeDeclare(
+        "broadcast_logs", // Name
+        "fanout",         // Type
+        true,             // Durable
+        false,            // Auto-deleted
+        false,            // Internal
+        nil,              // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to declare fanout exchange: %v", err)
+    }
+
+    // Declare direct exchange
+    err = ch.ExchangeDeclare(
+        "direct_logs", // Name
+        "direct",      // Type
+        true,          // Durable
+        false,         // Auto-deleted
+        false,         // Internal
+        nil,           // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to declare direct exchange: %v", err)
+    }
+
+    // Declare queues
+    q1, err := ch.QueueDeclare(
+        "",    // Name (let RabbitMQ generate a name)
+        false, // Durable
+        true,  // Delete when unused
+        true,  // Exclusive
+        false, // No-wait
+        nil,   // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to declare a queue: %v", err)
+    }
+
+    q2, err := ch.QueueDeclare(
+        "",    // Name (let RabbitMQ generate a name)
+        false, // Durable
+        true,  // Delete when unused
+        true,  // Exclusive
+        false, // No-wait
+        nil,   // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to declare a queue: %v", err)
+    }
+
+    // Bind queues to fanout exchange
+    err = ch.QueueBind(
+        q1.Name,         // Queue name
+        "",              // Routing key (ignored by fanout exchange)
+        "broadcast_logs", // Exchange name
+        false,
+        nil,
+    )
+    if err != nil {
+        log.Fatalf("Failed to bind queue to fanout exchange: %v", err)
+    }
+
+    // Bind queue to direct exchange with routing keys
+    routingKeys := []string{"album.created", "song.created", "label.created"}
+    for _, key := range routingKeys {
+        err = ch.QueueBind(
+            q2.Name,          // Queue name
+            key,              // Routing key
+            "direct_logs",    // Exchange name
+            false,
+            nil,
+        )
+        if err != nil {
+            log.Fatalf("Failed to bind queue to direct exchange with routing key %s: %v", key, err)
+        }
+    }
+
+    msgs1, err := ch.Consume(
+        q1.Name, // Queue
+        "",      // Consumer tag
+        true,    // Auto-ack
+        false,   // Exclusive
+        false,   // No-local
+        false,   // No-wait
+        nil,     // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to register a consumer for fanout queue: %v", err)
+    }
+
+    msgs2, err := ch.Consume(
+        q2.Name, // Queue
+        "",      // Consumer tag
+        true,    // Auto-ack
+        false,   // Exclusive
+        false,   // No-local
+        false,   // No-wait
+        nil,     // Arguments
+    )
+    if err != nil {
+        log.Fatalf("Failed to register a consumer for direct queue: %v", err)
+    }
+
+    go func() {
+        for msg := range msgs1 {
+            log.Printf("Received message from fanout exchange: %s", msg.Body)
+        }
+    }()
+
+    go func() {
+        for msg := range msgs2 {
+            log.Printf("Received message from direct exchange: %s", msg.Body)
+        }
+    }()
+
+    log.Println("Waiting for messages. To exit press CTRL+C")
+    select {} // Block forever
+}
+```
+
+## Module 6: AWS
+## Module 7: Docker and Kubernetis
 Docker is a platform that automate the deployment of applications inside lightweight, portable containers. 
 
 Containers package up everything like code, runtime, system tools, libraries, and settings, that an application needs for runing, so it runs consistently across different computing environments.
