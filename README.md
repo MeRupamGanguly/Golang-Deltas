@@ -1228,27 +1228,27 @@ MongoDB and Redis excel in horizontal scaling, while PostgreSQL supports vertica
 - MongoDB’s oplog is a capped collection that records all write operations (inserts, updates, deletes) in the order they occur.
 
 #### Operations
-`$eq`: Matches values that are equal to a specified value.
-`$ne`: Matches all values that are not equal to a specified value.
-`$gt`, $gte, $lt, $lte: Greater than, greater than or equal to, less than, less than or equal to, respectively.
-`$in`: Matches any of the values specified in an array.
-`$nin`: Matches none of the values specified in an array.
-`$set`: Sets the value of a field in a document.
-`$unset`: Removes the specified field from a document.
-`$inc`: Increments the value of the field by a specified amount.
-`$push`: Adds an element to an array.
-`$addToSet`: Adds elements to an array only if they do not already exist.
-`$pull`: Removes all instances of a value from an array.
-`$rename`: Renames a field.
-`$project`: Reshapes documents by including, excluding, or transforming fields.
-`$elemMatch`: Matches documents that contain an array field with at least one element that matches all the specified query criteria.
-`$all`: Matches arrays that contain all elements specified in the query.
-`$size`: Matches arrays with a specific number of elements.
-`$sort`: Orders documents.
-`$limit`: Limits the number of documents.
-`$skip`: Skips a specified number of documents.
-`$match`: Filters documents.
-`$unwind`: Imagine you have a collection where each document contains an array field. When you apply $unwind to an array field in a document, MongoDB will create separate documents where Each new document will have the same values for all other fields except the one array field, for each element of the array.
+- `$eq`: Matches values that are equal to a specified value.
+- `$ne`: Matches all values that are not equal to a specified value.
+- `$gt`, $gte, $lt, $lte: Greater than, greater than or equal to, less than, less than or equal to, respectively.
+- `$in`: Matches any of the values specified in an array.
+- `$nin`: Matches none of the values specified in an array.
+- `$set`: Sets the value of a field in a document.
+- `$unset`: Removes the specified field from a document.
+- `$inc`: Increments the value of the field by a specified amount.
+- `$push`: Adds an element to an array.
+- `$addToSet`: Adds elements to an array only if they do not already exist.
+- `$pull`: Removes all instances of a value from an array.
+- `$rename`: Renames a field.
+- `$project`: Reshapes documents by including, excluding, or transforming fields.
+- `$elemMatch`: Matches documents that contain an array field with at least one element that matches all the specified query criteria.
+- `$all`: Matches arrays that contain all elements specified in the query.
+- `$size`: Matches arrays with a specific number of elements.
+- `$sort`: Orders documents.
+- `$limit`: Limits the number of documents.
+- `$skip`: Skips a specified number of documents.
+- `$match`: Filters documents.
+- `$unwind`: Imagine you have a collection where each document contains an array field. When you apply $unwind to an array field in a document, MongoDB will create separate documents where Each new document will have the same values for all other fields except the one array field, for each element of the array.
 
 ```json
 {
@@ -1305,7 +1305,7 @@ db.sales.aggregate([
 ```
 
 
-`$lookup` stage in MongoDB aggregation allows you to perform a left outer join to retrieve documents from another collection and include them in your result set.
+- `$lookup` stage in MongoDB aggregation allows you to perform a left outer join to retrieve documents from another collection and include them in your result set.
 
 ```json
 // Orders Collection:
@@ -1352,7 +1352,7 @@ db.orders.aggregate([
 ]
 ```
 
-`$text`: Performs text search. 
+- `$text`: Performs text search. 
 Text search is case insensitive by default. Text search is also diacritic insensitive (e.g., "café" would match "cafe").
 MongoDB calculates a relevance score (score) for each document based on the frequency and proximity of the search terms in the indexed fields.
 
