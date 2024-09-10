@@ -1,30 +1,35 @@
 # Golang-Deltas
 ## Module 1: GoLang
 ### Introduce Yourself: 
-I have a background in B.Tech IT and passout of	 2020. After college, I joined Sensibol as a Golang Backend Developer. My primary role involved developing microservices using Golang, AWS, MongoDB, and Redis. I resigned in April to take care of my father's cancer treatment. Now that he is well, I am seeking new opportunities.
+I have a background in B.Tech IT and passout of	 2020. After college, I joined Sensibol as a Golang Backend Developer. My primary role was developing microservices using Golang, AWS, MongoDB, and Redis. I resigned in April to take care of my father's cancer treatment. Now he is well, I am looking for new opportunities.
 
 ### What projects do you woked on Sensibol, describe: 
 I worked on PDL (Phonographic Digital Limited), a music distribution and royalty management platform. 
 
 Additionally, I worked on Singshala, which is similar to TikTok but with extra feature of analyzing the audio components of videos and providing rankings based on the analysis. 
 
-Both projects used Golang, MongoDB, Redis, AWS S3, SQS, SNS, Lambda, etc. Both had microservices architectures. PDL transitioned from a domain-driven approach to an event-driven one, while Singshala is domain-driven and complete. 
+Both projects used Golang, MongoDB, Redis, AWS S3, SQS, SNS, Lambda, etc. Both had microservices architectures. PDL transitioned from a domain-driven approach to an event-driven one, while Singshala was domain-driven and complete. 
 
-Since Sensibol is very conservative regarding hiring, only three backend developers worked on both projects, so my involvement was extensive.
+Since Sensibol is very conservative regarding hiring, only three backend developers worked on both the projects, so my involvement was extensive.
 
 ### Microservices vs Monolith:
 Microservices are better for large projects where scaling and almost zero downtime are required. Bug fixing and maintaining the codebase are easier. A disadvantage of microservices can be inter-service network calls.
+
+### Authentication vs  Authorization:
+Authentication is about verifying identity. Users typically provide credentials such as a username and password, biometric data (like fingerprints or facial recognition), or security tokens. The system checks these credentials against stored data to confirm their validity.
+
+Authorization is about granting permissions based on that verified identity. Once authenticated, the system checks the user’s permissions and roles to determine what they can access or modify. Authorization policies might be based on roles, permissions, or other criteria.
 
 ### Golang Garbage Collection:
 Golang uses automatic garbage collection to manage memory. Developers do not need to allocate or deallocate memory manually, which reduces memory-related errors.
 
 ### Goroutine vs Thread:
-Goroutines are designed for concurrency, meaning multiple tasks are run using context switching. Threads are designed for parallelism, meaning multiple tasks can run simultaneously on multiple CPU cores.
+Goroutines are designed for concurrency, meaning multiple tasks can run using context switching. Threads are designed for parallelism, meaning multiple tasks can run simultaneously on multiple CPU cores.
 
 Goroutines have a dynamic stack size and are managed by the Go runtime. Threads have a fixed-size stack and are managed by the OS kernel.
 
 ### What is Closure in golang:
-A closure is a special type of anonymous function that can use variables declared outside of the function. Closures treat functions as values, allowing us to assign functions to variables, pass functions as arguments, and return functions from other functions. 
+A closure is a special type of anonymous function that can use variables, that declared outside of the function. Closures treat functions as values, allowing us to assign functions to variables, pass functions as arguments, and return functions from other functions. 
 
 ```go
 v:= func (f func (i int) int) func()int{
@@ -108,15 +113,15 @@ In golang we have Mutex, Semaphore, Channels as concurency primitives.
 
 Mutex is used to protect shared resources from being accessed by multiple threads simultaneously.
 
-Semaphore is used to protect shared pool of resources from being accessed by multiple threads simultaneously. Semaphore is a Counter which start from Number of Reosurces. When one thread using the reosurces Semaphote decremented by 1. If semaphore value is 0 then thread will wait untils its value greater than 0. When one thread done with the resources then Semaphore incremented by 1.
+Semaphore is used to protect shared pool of resources from being accessed by multiple threads simultaneously. Semaphore is a Counter which start from Number of Reosurces. When one thread using the reosurces Semaphore decremented by 1. If semaphore value is 0 then thread will wait untils its value greater than 0. When one thread done with the resources then Semaphore incremented by 1.
 
 Channel is used to communicate via sending and receiving data and provide synchronisation between multiple gorountines. If channel have a value then execution blocked until reader reads from the channel.
 Channel can be buffered, allowing goroutines to send multiple values without blocking until the buffer is full. 
 
 Waitgroup is used when we want the function should wait until goroutines complete its task.
-Waitgroup has Add() function which increments the wait counter for each goroutine.
-Wait() is used for wait until wait counter became zero.
-Done() decrement wait counter and it called when goroutine complete its task.
+Waitgroup has Add() function which increments the wait-counter for each goroutine.
+Wait() is used for wait until wait-counter became zero.
+Done() decrement wait-counter and it called when goroutine complete its task.
 
 ### Map Synchronisation:
 In golang if multiple goroutines try to acess map at same time, then the operations leads to Panic for RACE or DEADLOCK (fatal error: concurrent map read and map write).
@@ -214,9 +219,9 @@ func main() {
 ```
 
 ### Select Statement:
-Assume a development scenerio where we have 3 s3 Buckets. We spawn 3 GO-Routines each one uploading a File on each S3 bucket at same time. We have to Return SignedUrl of the file so user can stream the File as soon as possible. Now we do not have to wait for 3 S3 Upload operation, when one s3 upload done we can send the SignedUrl of the File to the User so he can Stream. And Other two S3 Upload will continue at same time. This is the Scenerio when Select Statement will work as a Charm.
+Assume a development scenerio where we have 3 s3 Buckets. We spawn 3 GO-Routines each one uploading a File on each S3 bucket at same time. We have to Return SignedUrl of the file so user can stream the File as soon as possible. Now we do not have to wait for 3 S3 Upload operation, when one s3 upload done we can send the SignedUrl of the File to the User so he can Stream. And Other two S3 Upload will continue at same time. This is the Scenerio when Select Statement can help.
 
-Select statement is used for Concurency coomunication between multiple goroutines. Select have multiple Case statement related to channel operations. Select block the execution unitl one of its case return. If multiple case returns at same time, then one random case is selected for returns. If no case is ready and there's a default case, it executes immediately. If there's no default case, select blocks until at least one case is ready.
+Select statement is used for Concurency comunication between multiple goroutines. Select have multiple Case statement related to channel operations. Select block the execution unitl one of its case return. If multiple case returns at same time, then one random case is selected for returns. If no case is ready and there's a default case, it executes immediately. If there's no default case, select blocks until at least one case is ready.
 ```go
 func work(ctx context.Context, ch chan<- string) {
 	rand.NewSource(time.Now().Unix())
@@ -249,7 +254,7 @@ func main() {
 ### SOLID Principles:
 SOLID priciples are guidelines for designing Code base that are easy to understand maintain adn extend over time.
 
-Single Responsibility:- A Struct/Class should only a single reason to change. Fields of Author shoud not placed inside Book Struct.
+Single Responsibility:- A Struct/Class should have only a single reason to change. Fields of Author shoud not placed inside Book Struct.
 ```go
 type Book struct{
   ISIN string
@@ -261,7 +266,7 @@ type Author struct{
   Name String
 }
 ```
-Assume One Author decided later, he does not want to Disclose its Real Name to Spread. So we can Serve Frontend by Alias instead of Real Name. Without Changing Book Class/Struct, we can add Alias in Author Struct. By that, Existing Authors present in DB will not be affected as Frontend will Change Name only when it Founds that Alias field is not empty.
+Assume One Author decided later, he does not want to Disclose its Real Name to Spread. So we can Serve Frontend by Alias instead of Real Name. Without Changing Book Class/Struct, we can add Alias in Author Struct. By that, Existing Authors present in DB will not be affected as Frontend will Change Name only when it Founds that - Alias field is not empty.
 ```go
 type Book struct{
   ISIN string
@@ -1216,16 +1221,138 @@ MongoDB and Redis excel in horizontal scaling, while PostgreSQL supports vertica
 
 ### MongoDB
 
+```bash
+docker run -it --name ubuntu -p 3000:3000 ubuntu:20.04
+```
+```bash
+rupam@opulence:~$ docker ps -a
+CONTAINER ID   IMAGE          COMMAND       CREATED          STATUS          PORTS                                       NAMES
+62c2825a182f   ubuntu:20.04   "/bin/bash"   26 seconds ago   Up 25 seconds   0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   ubuntu
+```
+```bash
+apt update
+apt install mongodb
+apt install wget
+wget https://golang.org/dl/go1.23.1.linux-amd64.tar.gz
+apt install nano
+tar -xvf go1.23.1.linux-amd64.tar.gz
+mv go /usr/local
+nano .bashr
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/go
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+go version
+nano main.go
+go mod init deltas
+go mod tidy
+go run main.go 
+mongod
+mongo
+show dbs
+use MyDatabase
+db.Album.find({}).pretty()
+exit
+exit
+docker start ubuntu
+docker exec -it ubuntu /bin/bash
+```
+#### Find by name:
+db.Album.find({"name":"A2"}).pretty()
+
+#### Elemmatch vs Dot operator:
+- `$elemMatch` is typically used in queries to find documents where at least one element in an array meets all criteria. So it returns documents where condition-1 and condition-2 must matched with same array-element of same document.
+
+- `.` The dot operator allows us to get a result where each element of the array, meets one condition individually. So it returns documents where condition-1 matched with array-element-1 and condition-2 matched with array-element-2 of same document.
+
+```json
+[
+  {
+    "_id": "6671d6fa65fcd889d2dc222b",
+    "name": "Company 3",
+    "employee": [
+      { "name": "Employee 0", "age": 26, "is_active": true, 
+	  "roles": ["IT", "Finance", "Law"] },
+      {  "name": "Employee 40", "age": 29, "is_active": true, 
+	  "roles": ["Sell"] }
+    ]
+  },
+  {
+    "_id": "6671d6fa65fcd889d2dc2255",
+    "name": "Company 5",
+    "employee": [
+      { "name": "Employee 8", "age": 38, "is_active": true, 
+	  "roles": [] },
+      {  "name": "Employee 11", "age": 26, "is_active": true, 
+	  "roles": ["Law"] }
+    ]
+  },
+  {
+    "_id": "6671d6fa65fcd889d2dc222a",
+    "name": "Company 4",
+    "employee": [
+      {  "name": "Employee 3", "age": 36, "is_active": true, 
+	  "roles": ["IT", "Finance", "Law"] },
+      {  "name": "Employee 80", "age": 41, "is_active": true, 
+	  "roles": ["Finance"] },
+      {  "name": "Employee 20", "age": 37, "is_active": false, 
+	  "roles": ["Finance"] }
+    ]
+  }
+]
+```
+```go
+db.Company.find({"employee.age":{$gt:30},"employee.is_active":true, "employee.roles":{$in:["Law"]}});
+// Result: Company 5,Company 4 
+// Why: Employee 8 has age 38 and role nil. 
+// but Employee 11 has age 26 and role Law. 
+// This document satisfy two condition with two different array element.
+
+db.Company.find({"employee":{$elemMatch:{"age":{$gt:30},"is_active":true,"roles":{$in:["Law"]}}}});
+// Result: Company 4 
+// Why: Employee 8 has age 38 and role nil. 
+// but Employee 11 has age 26 and role Law. 
+// This document does not satisfy two condition with same array element. 
+// So Company 5 not satisfied the Criteria.
+```
+#### Update Status from Pending to Approved : Update specific elements within nested arrays.
+```bash
+db.Album.find({"releases.status":"Pending"}).pretty()
+```
+`$` used to refer to a specific element within an array that matches the query criteria. 
+
+```bash
+db.Album.updateMany(
+{"releases.status":"Pending"},
+{$set:{"releases.$[release].status":"Approved"}},
+{arrayFilters:[{"release.status":"Pending"}]}
+)
+```
+`arrayFilter` determine which element of the array should updated. Each object within the releases array is an element. The element(release object) where "status": "Pending" is the one targeted by the array filter.
+`$[release]` in the update statement, refers to the elements that match the conditions written within the arrayFilters.
+
+#### Update Artist Name from Artis2 to King : Update specific elements within nested arrays.
+In this example, releases is an array that contains objects, and each object has an artists array.
+
+In MongoDB, when using arrayFilters in an update operation that targets nested arrays, each filter within the arrayFilters is used to specify conditions for different levels of nested arrays. 
+
+```bash
+db.Album.updateMany(
+{"releases.artists.name":"Artist2"},
+{$set:{"releases.$[release].artists.$[artist].name":"King"}},
+{arrayFilters:[{"release.artists.name":"Artist2"},{"artist.name":"Artist2"}]}
+)
+```
+
+
 #### Scalability:
 - Sharding enables horizontal scaling.
 - Each shard contains a subset of the data, distributed based on a shard key.
-- MongoDB uses config servers to store metadata like mapping between shards and shard keys.
-- Config servers allow MongoDB routers (`mongos` instances) to send queries to the appropriate shards based on the shard key.
-- `mongos` instances also manage load balancing across the shards. They distribute incoming queries evenly across shards.
+- MongoDB uses config servers to store metadata like mapping between shards and shard keys. Using config servers, MongoDB routers (`mongos` instances) send queries to the appropriate shards based on the shard key.
+- MongoDB routers - `mongos` instances also manage load balancing across the shards. They distribute incoming queries evenly across shards.
 - Adding more `mongos` instances can improve the throughput and scalability.
 - MongoDB uses replica sets to provide redundancy and automatic failover.
 - Each replica set consists of multiple nodes (typically three or more): one primary node for read and write operations and secondary nodes that replicate data from the primary. If the primary node fails, a new primary is elected from the remaining nodes in the replica set, ensuring continuous availability.
-- MongoDB’s oplog is a capped collection that records all write operations (inserts, updates, deletes) in the order they occur.
+- MongoDB’s oplog is a collection that records all write operations (inserts, updates, deletes) in the order they occur.
 
 #### Operations
 - `$eq`: Matches values that are equal to a specified value.
@@ -1241,14 +1368,14 @@ MongoDB and Redis excel in horizontal scaling, while PostgreSQL supports vertica
 - `$pull`: Removes all instances of a value from an array.
 - `$rename`: Renames a field.
 - `$project`: Reshapes documents by including, excluding, or transforming fields.
-- `$elemMatch`: Matches documents that contain an array field with at least one element that matches all the specified query criteria.
+- `$elemMatch`: Matches documents that contain an array field with `at least one element` that matches `all` the specified query criteria.
 - `$all`: Matches arrays that contain all elements specified in the query.
 - `$size`: Matches arrays with a specific number of elements.
 - `$sort`: Orders documents.
 - `$limit`: Limits the number of documents.
 - `$skip`: Skips a specified number of documents.
 - `$match`: Filters documents.
-- `$unwind`: Imagine you have a collection where each document contains an array field. When you apply $unwind to an array field in a document, MongoDB will create separate documents where Each new document will have the same values for all other fields except the one array field, for each element of the array.
+- `$unwind`: Imagine you have a collection where each document contains an array field. When you apply $unwind to an array field in a document, MongoDB will create separate documents for each element of the array, where Each new document will have the same values for all other fields except the one array field.][]
 
 ```json
 {
@@ -1305,7 +1432,7 @@ db.sales.aggregate([
 ```
 
 
-- `$lookup` stage in MongoDB aggregation allows you to perform a left outer join to retrieve documents from another collection and include them in your result set.
+- `$lookup` is a stage in MongoDB aggregation, that allows you to perform a left outer join to retrieve documents from another collection and include them in your result set.
 
 ```json
 // Orders Collection:
@@ -1355,7 +1482,7 @@ db.orders.aggregate([
 - `$text`: Performs text search. 
 Text search is case insensitive by default. Text search is also diacritic insensitive (e.g., "café" would match "cafe").
 MongoDB calculates a relevance score (score) for each document based on the frequency and proximity of the search terms in the indexed fields.
-
+Text searches in MongoDB require a text index on the field(s) you want to search.
 ```json
 {
   "_id": ObjectId("60d02e9c25c156ae22df2b73"),
@@ -1384,7 +1511,7 @@ db.books.find(
 ).sort({ score: { $meta: "textScore" } });
 ```
 
-MongoDB supports various types of indexes to accommodate different query patterns and optimize performance:
+MongoDB supports various types of indexes for different query patterns and optimize performance:
 
 Single Field Index: Indexes on a single field of a document.
 
@@ -1416,7 +1543,7 @@ Hashed Index: Indexes where MongoDB hashes the indexed field's values, typically
 
 
 
-### $elemMatch v/s . operator:
+#### $elemMatch v/s . operator:
 
 ```json
 [
@@ -3355,3 +3482,4 @@ kubectl port-forward svc/service-a 8080:8080 -n mynamespace
 You can then access Service A at http://localhost:8080.
 
 
+## Module 8: System Design
