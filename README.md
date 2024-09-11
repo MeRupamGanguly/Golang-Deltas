@@ -66,7 +66,7 @@ func main() {
 ### Panic Defer Recover combo:
 panic is use to cause a Runtime Error and Stop the execution.
 When a function return or panicking then Defer blocks are called according to Last in First out manner, the last defer will execute first.
-Recover is use to regain the execution from a panicking situation and handle it properly then stop execution. Recover is usefule for close any connection like db and websockets etc.
+Recover is use to regain the execution from a panicking situation and handle it properly then stop execution. Recover is useful for close any connection like db and websockets etc.
 ```go
 func div(num int) int {
 	if num == 0 {
@@ -252,7 +252,7 @@ func main() {
 ```
 
 ### SOLID Principles:
-SOLID priciples are guidelines for designing Code base that are easy to understand maintain adn extend over time.
+SOLID priciples are guidelines for designing Code base that are easy to understand maintain and extend over time.
 
 Single Responsibility:- A Struct/Class should have only a single reason to change. Fields of Author shoud not placed inside Book Struct.
 ```go
@@ -458,7 +458,9 @@ type GetRes struct {
 }
 
 func (t *httpTransport) Add(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	t.AddCounter()
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(AddRes{Success: true})
 }
 func (t *httpTransport) Get(w http.ResponseWriter, r *http.Request) {
@@ -1259,60 +1261,100 @@ docker exec -it ubuntu /bin/bash
 #### Find by name:
 db.Album.find({"name":"A2"}).pretty()
 
-#### Elemmatch vs Dot operator:
-- `$elemMatch` is typically used in queries to find documents where at least one element in an array meets all criteria. So it returns documents where condition-1 and condition-2 must matched with same array-element of same document.
-
-- `.` The dot operator allows us to get a result where each element of the array, meets one condition individually. So it returns documents where condition-1 matched with array-element-1 and condition-2 matched with array-element-2 of same document.
-
+#### Dot Operator:
+First, we need to locate the documents where the releases array contains an item with a specific platform_id. It filters documents where at least one releases item has the platform_id equal to "66e0502252c36ebe41835855".
+- `db.Album.find({"releases.platform_id":"66e0502252c36ebe41835855"}).pretty()`
 ```json
-[
-  {
-    "_id": "6671d6fa65fcd889d2dc222b",
-    "name": "Company 3",
-    "employee": [
-      { "name": "Employee 0", "age": 26, "is_active": true, 
-	  "roles": ["IT", "Finance", "Law"] },
-      {  "name": "Employee 40", "age": 29, "is_active": true, 
-	  "roles": ["Sell"] }
-    ]
-  },
-  {
-    "_id": "6671d6fa65fcd889d2dc2255",
-    "name": "Company 5",
-    "employee": [
-      { "name": "Employee 8", "age": 38, "is_active": true, 
-	  "roles": [] },
-      {  "name": "Employee 11", "age": 26, "is_active": true, 
-	  "roles": ["Law"] }
-    ]
-  },
-  {
-    "_id": "6671d6fa65fcd889d2dc222a",
-    "name": "Company 4",
-    "employee": [
-      {  "name": "Employee 3", "age": 36, "is_active": true, 
-	  "roles": ["IT", "Finance", "Law"] },
-      {  "name": "Employee 80", "age": 41, "is_active": true, 
-	  "roles": ["Finance"] },
-      {  "name": "Employee 20", "age": 37, "is_active": false, 
-	  "roles": ["Finance"] }
-    ]
-  }
-]
+{
+	"_id" : "66e0502252c36ebe41835858",
+	"name" : "A2",
+	"label_id" : "66e0502252c36ebe41835857",
+	"releases" : [
+		{
+			"platform_id" : "66e0502252c36ebe41835852",
+			"status" : "Pending",
+			"artists" : [
+				{
+					"_id" : "66e0502252c36ebe41835853",
+					"name" : "Artist4"
+				},
+				{
+					"_id" : "66e0502252c36ebe41835854",
+					"name" : "Artist5"
+				}
+			]
+		},
+		{
+			"platform_id" : "66e0502252c36ebe41835855",
+			"status" : "Pending",
+			"artists" : [
+				{
+					"_id" : "66e0502252c36ebe41835856",
+					"name" : "Artist3"
+				}
+			]
+		}
+	]
+}
 ```
-```go
-db.Company.find({"employee.age":{$gt:30},"employee.is_active":true, "employee.roles":{$in:["Law"]}});
-// Result: Company 5,Company 4 
-// Why: Employee 8 has age 38 and role nil. 
-// but Employee 11 has age 26 and role Law. 
-// This document satisfy two condition with two different array element.
+#### Projection:
+To control which fields are included in the result, you use projection. In this case, you want to include only the releases that match the platform_id and exclude the rest.
 
-db.Company.find({"employee":{$elemMatch:{"age":{$gt:30},"is_active":true,"roles":{$in:["Law"]}}}});
-// Result: Company 4 
-// Why: Employee 8 has age 38 and role nil. 
-// but Employee 11 has age 26 and role Law. 
-// This document does not satisfy two condition with same array element. 
-// So Company 5 not satisfied the Criteria.
+- `db.Album.find({"releases.platform_id":"66e0502252c36ebe41835855"},{"releases.platform_id":1}).pretty()`
+```json
+{
+	"_id" : "66e0502252c36ebe41835858",
+	"releases" : [
+		{
+			"platform_id" : "66e0502252c36ebe41835852"
+		},
+		{
+			"platform_id" : "66e0502252c36ebe41835855"
+		}
+	]
+}
+```
+#### Aggregation
+However, simple projection alone won’t filter out the unwanted releases items within the array. For that, we use the aggregation framework.
+
+Aggregation Pipeline Steps:
+- Match Stage: Filters documents to include only those documents which match the criteria. 
+`{$match:{"releases.platform_id":"66e0502252c36ebe41835855"}}`
+	This filters the documents to include only those where the releases array contains at least one item with the platform_id equal to "66e0502252c36ebe41835855".
+- Project Stage: Reshapes each document by including only the relevant parts.
+```json
+{
+    $project: {
+        releases: {
+            $filter: { // A special operator to filter elements from an array.
+                input: "$releases",   // Access the `releases` array // specifies that we are working with the releases array.
+                as: "release",   // Temporary name for each array element // gives each item in the releases array a temporary name (release).
+                cond: { $eq: ["$$release.platform_id", "66e0502252c36ebe41835855"] } // Condition for filtering 
+				// $$release to refer to the current element in the array. 
+				// The $$ prefix denotes that release is a variable, 
+				// and you use it to access fields within each element of the array.
+            }
+        }
+    }
+}	
+```
+- `db.Album.aggregate([{$match:{"releases.platform_id":"66e0502252c36ebe41835855"}},{$project:{releases:{$filter:{input:"$releases",as:"release", cond:{$eq:["$$release.platform_id","66e0502252c36ebe41835855"]}}}}}]).pretty()`
+```json
+{
+	"_id" : "66e0502252c36ebe41835858",
+	"releases" : [
+		{
+			"platform_id" : "66e0502252c36ebe41835855",
+			"status" : "Pending",
+			"artists" : [
+				{
+					"_id" : "66e0502252c36ebe41835856",
+					"name" : "Artist3"
+				}
+			]
+		}
+	]
+}
 ```
 #### Update Status from Pending to Approved : Update specific elements within nested arrays.
 ```bash
@@ -1343,6 +1385,61 @@ db.Album.updateMany(
 )
 ```
 
+#### Elemmatch vs Dot operator:
+- `$elemMatch` is typically used in queries to find documents where at least one element in an array meets all the criteria. So it returns documents where condition-1 and condition-2 must matched with same array-element of same document.
+
+- `.` The dot operator is typically used in queries to find documents where each element of the array, meets one condition individually. So it returns documents where condition-1 matched with array-element-1 and condition-2 matched with array-element-2 of same document.
+
+```json
+[
+  {
+    "_id": "6671d6fa65fcd889d2dc222b",
+    "name": "Company 3",
+    "employee": [
+      { "name": "Employee 0", "age": 26, "is_active": true, 
+	  "roles": ["IT", "Finance", "Law"] },
+      {  "name": "Employee 40", "age": 29, "is_active": true, 
+	  "roles": ["Sell"] }
+    ]
+  },
+  {
+    "_id": "6671d6fa65fcd889d2dc222a",
+    "name": "Company 4",
+    "employee": [
+      {  "name": "Employee 3", "age": 36, "is_active": true, 
+	  "roles": ["IT", "Finance", "Law"] },
+      {  "name": "Employee 80", "age": 41, "is_active": true, 
+	  "roles": ["Finance"] },
+      {  "name": "Employee 20", "age": 37, "is_active": false, 
+	  "roles": ["Finance"] }
+    ]
+  },
+    {
+    "_id": "6671d6fa65fcd889d2dc2255",
+    "name": "Company 5",
+    "employee": [
+      { "name": "Employee 8", "age": 38, "is_active": true, 
+	  "roles": [] },
+      {  "name": "Employee 11", "age": 26, "is_active": true, 
+	  "roles": ["Law"] }
+    ]
+  }
+]
+```
+```go
+db.Company.find({"employee.age":{$gt:30},"employee.is_active":true, "employee.roles":{$in:["Law"]}});
+// Result: Company 5,Company 4 
+// Why: Employee 8 has age 38 and role nil. 
+// but Employee 11 has age 26 and role Law. 
+// This document satisfy two condition with two different array element.
+
+db.Company.find({"employee":{$elemMatch:{"age":{$gt:30},"is_active":true,"roles":{$in:["Law"]}}}});
+// Result: Company 4 
+// Why: Employee 8 has age 38 and role nil. 
+// but Employee 11 has age 26 and role Law. 
+// This document does not satisfy two condition with same array element. 
+// So Company 5 not satisfied the Criteria.
+```
 
 #### Scalability:
 - Sharding enables horizontal scaling.
@@ -1542,60 +1639,6 @@ Geospatial Index: Indexes for geospatial data, supporting queries that calculate
 Hashed Index: Indexes where MongoDB hashes the indexed field's values, typically used for sharding.
 
 
-
-#### $elemMatch v/s . operator:
-
-```json
-[
-  {
-    "_id": "6671d6fa65fcd889d2dc222b",
-    "name": "Company 3",
-    "employee": [
-      { "name": "Employee 0", "age": 26, "is_active": true, 
-	  "roles": ["IT", "Finance", "Law"] },
-      {  "name": "Employee 40", "age": 29, "is_active": true, 
-	  "roles": ["Sell"] }
-    ]
-  },
-  {
-    "_id": "6671d6fa65fcd889d2dc2255",
-    "name": "Company 5",
-    "employee": [
-      { "name": "Employee 8", "age": 38, "is_active": true, 
-	  "roles": [] },
-      {  "name": "Employee 11", "age": 26, "is_active": true, 
-	  "roles": ["Law"] }
-    ]
-  },
-  {
-    "_id": "6671d6fa65fcd889d2dc222a",
-    "name": "Company 4",
-    "employee": [
-      {  "name": "Employee 3", "age": 36, "is_active": true, 
-	  "roles": ["IT", "Finance", "Law"] },
-      {  "name": "Employee 80", "age": 41, "is_active": true, 
-	  "roles": ["Finance"] },
-      {  "name": "Employee 20", "age": 37, "is_active": false, 
-	  "roles": ["Finance"] }
-    ]
-  }
-]
-```
-The dot operator allows us to get a result where each of the two arrays in a document meets one condition individually, but neither array meets all conditions on its own.
-```go
-db.Company.find({"employee.age":{$gt:30},"employee.is_active":true, "employee.roles":{$in:["Law"]}});
-// Result: Company 5,Company 4 
-// Why: Employee 8 has age 38 and role nil. 
-// but Employee 11 has age 26 and role Law. 
-// This document satisfy two condition with two different array element.
-
-db.Company.find({"employee":{$elemMatch:{"age":{$gt:30},"is_active":true,"roles":{$in:["Law"]}}}});
-// Result: Company 4 
-// Why: Employee 8 has age 38 and role nil. 
-// but Employee 11 has age 26 and role Law. 
-// This document does not satisfy two condition with same array element. 
-// So Company 5 not satisfied the Criteria.
-```
 
 Assume we are working with this Schema
 ```go
