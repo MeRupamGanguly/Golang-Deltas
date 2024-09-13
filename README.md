@@ -2587,14 +2587,14 @@ Containers package up everything like code, runtime, system tools, libraries, an
 
 Basic Concepts:
 
-Image: A snapshot of a filesystem. An image contains everything needed to run an application: code, runtime, libraries, and environment variables. Images are read-only.
+Image: Docker Image is a snapshot of a filesystem. An image contains everything needed to run an application: code, runtime, libraries, and environment variables. Images are read-only.
 
-Container: A running instance of an image. Containers can write to their own filesystem (but not to the image).
+Container: Docker Container is a running instance of an image. Containers can write to their own filesystem (but not to the image).
 Containers have a writable layer on top of the image.
 
 Docker Hub: A cloud-based registry where Docker images are stored and shared.
 
-Docker volumes are used for persisting data of Containers, Single can be shared among multiple containers.
+Docker volumes are used for persisting data of Containers, when we remove the container the volume associated with it, not removed until we remove the volume specifically, one volume can be shared among multiple containers.
 
 #### Run Mongodb:
 ```bash
@@ -2619,12 +2619,12 @@ docker run -d \
 ```
 
 ```bash
-docker exec -it mongodb mongo
+docker exec -it mongodb /bin/bash
 ```
 ```bash
 docker stop mongodb
 ```
-Dockerfile: A script with a set of instructions that required to build a Docker image.  Each instruction in the Dockerfile creates a new layer in the Docker image, which is then used to build and run containers.
+Dockerfile: Dockerfile is a script for building a Docker image.  Each instruction in the Dockerfile creates a new layer in the Docker image, which is then used to build and run containers.
 
 Dockerfile Commands
 ```bash
@@ -2662,12 +2662,12 @@ The docker build command is used to create the image from the Dockerfile.
 ```bash
 docker build -t my-image:latest .
 ```
-. represents the current directory. Docker will send, all the contents of the directory to the Docker daemon to use in the build process.
+. represents the current directory where dockerfile present.
 
+Docker compose is a command is use for Start/Up multiple seervices, networks and volumes with single command `docker-compose up`
+Docker compose  uses a YAML file (docker-compose.yml) to configure these Services, Networks and Volumes.
 
-Docker Compose is a tool for defining and running multi-container Docker applications. It uses a YAML file (docker-compose.yml) to configure services, networks, and volumes, and allows us to start all services with a single command (docker-compose up).
-
-docker-compose.override.yml allow us to modify or extend the base docker-compose.yml configuration without changing the original file. They are useful for defining environment-specific settings or adjustments for local development, staging or prod.
+docker-compose.override.yml allow us to modify or extend the base docker-compose.yml configuration without changing the original file. They are useful where environment-specific settings or adjustments for local development, staging or prod are required.
 When we run docker-compose up, Docker Compose automatically includes settings from docker-compose.override.yml in addition to docker-compose.yml
 
 `docker-compose -f docker-compose.yml up`
@@ -2676,16 +2676,16 @@ This command ignores the docker-compose.override.yml file and only uses the sett
 Docker networking enables containers to communicate with each other and with the outside world. Common network modes include:
 - Bridge: Default network mode where containers are connected to a virtual bridge and can communicate with each other.
 
-- Host: Containers share the host’s network stack and IP address.
+- Host: Containers share the host’s networks and IP address.
 
-- Overlay: Used in multi-host setups to connect containers across different Docker hosts.
+- Overlay: Used to connect containers across multiple Docker hosts.
 
-- Macvlan: Assigns a unique MAC address to containers, making them appear as physical network interfaces.
+- Macvlan: Each container have its own MAC address, making containers appear as physical network interfaces.
 
 
 Docker Performance and Optimization:
 
-- By combining multiple commands into a single RUN instruction, we can reduce the number of layers in the Docker image and ensure that temporary files are removed within the same layer where they are created.
+- By combining multiple commands into a single RUN instruction, we can reduce the numer of image layers and ensure that temporary files are removed within the same layer where they are created.
 
 - After building the Go application, you should remove source code, module files, and other temporary build artifacts that are not needed in the final image. This helps to keep the final image minimal and secure.
 
@@ -2714,7 +2714,7 @@ COPY --from=builder /app/myapp /myapp # binary (myapp) is copied from the build 
 
 CMD ["/myapp"] # specifies the command to run the application.
 ```
-- Use smaller base images: Opt for slim or alpine variants.
+- Use smaller base images like slim or alpine variants.
 - Use multi-stage builds to keep the final image minimal and efficient.
 - Minimize the number of layers: Combine commands in Dockerfile to reduce layers.
 - Use .dockerignore: Exclude unnecessary files from the build context.
@@ -2757,10 +2757,6 @@ Search for images on Docker Hub:
 ```bash
 docker search <term>
 ```
-List all containers with their status:
-```bash
-docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"
-```
 Downloads an image from a Docker registry (e.g., Docker Hub).
 ```bash
 docker pull <image>:<tag>
@@ -2789,7 +2785,7 @@ Lists all containers, including those that are stopped.
 ```bash
 docker ps -a
 ```
-Stops a running container.
+Action of a running container.
 ```bash
 docker stop <container>
 docker start <container>
@@ -3108,55 +3104,40 @@ Access Services:
 
 
 #### Kubernetes 
-Kubernetes is a powerful open-source platform designed to automate deploying, scaling, and managing containerized applications.  Kubernetes uses YAML files to define resources.
+Kubernetes is designed for automate the process of deploying, scaling, and managing containerized applications.  Kubernetes uses YAML files to define resources.
 
-Basic Concepts
-Cluster: A set of nodes (machines) that run containerized applications managed by Kubernetes.
+A Pod can contain one or more containers that share the same network, namespace and storage.
+Containers in the same Pod share a common IP address and port space. They can communicate with each other using localhost and the same port numbers. Pods can communicate with each other using their IP addresses and defined ports. Pods are often managed by higher-level controllers like Deployments, ReplicaSets, which handle scaling, updates, and ensuring that the desired number of Pod replicas are running.
 
-Node: A single machine (virtual or physical) that is part of a Kubernetes cluster. Each node runs a container runtime (like Docker), and necessary services to manage containers.
+ReplicaSet is a controller that ensures a specified number of identical Pods are running at any given time.   If a Pod fails or is deleted, the ReplicaSet creates a new Pod to replace it. A ReplicaSet uses a label selector to identify which Pods it should manage. The selector matches Pods based on their labels, and the ReplicaSet ensures that the Pods with these labels are created or deleted as needed.
 
-Pod: The smallest deployable unit in Kubernetes, consisting of one or more containers that share storage, networking, and a specification for how to run the containers. Pods can contain multiple containers that need to work together closely, sharing resources such as IP address and ports. Pods ensure that containers running together have shared local storage and are tightly coupled in terms of networking.
+Services provide a stable endpoint(DNS name and IP address) for accessing a set of Pods. This stable endpoint is crucial because Pods can come and go due to scaling, updates, or failures, but Services provide a consistent way to access these Pods.
 
-1. Pods
-Definition: The smallest and simplest Kubernetes object. A Pod represents a single instance of a running process in your cluster.
-Characteristics:
-Can contain one or more containers (e.g., Docker containers).
-Containers in a Pod share the same network namespace, which means they share the same IP address and port space.
-Pods can be used for single-container or multi-container applications that need to work together closely.
-2. Services
-Definition: A Kubernetes Service is an abstraction that defines a logical set of Pods and a policy by which to access them.
-Characteristics:
-Provides a stable IP address and DNS name to access Pods.
-Can perform load balancing across the Pods it targets.
-Supports different types of services, such as ClusterIP (accessible only within the cluster), NodePort (exposed on each node’s IP), LoadBalancer (provisions an external load balancer), and ExternalName (maps a service to a DNS name).
-3. Deployments
-Definition: A Kubernetes Deployment provides declarative updates to Pods and ReplicaSets.
-Characteristics:
-Manages the deployment and scaling of Pods.
-Ensures that a specified number of Pods are running and updated with the desired state.
-Handles rolling updates and rollbacks automatically, making it easier to manage changes and updates to applications.
-4. ReplicaSets
-Definition: A ReplicaSet ensures that a specified number of Pod replicas are running at any given time.
-Characteristics:
-Ensures that the desired number of Pod replicas are always up and running.
-Often used by Deployments to manage the Pods they create.
-Provides high availability and fault tolerance by maintaining a set number of Pod replicas.
-5. Other Key Concepts
-Namespaces: Provide a mechanism for isolating groups of resources within a single cluster. Useful for managing different environments (e.g., development, staging, production).
-ConfigMaps and Secrets: Store configuration data and sensitive information, respectively, that Pods can use.
-Volumes: Allow Pods to access storage resources that are shared or persistent.
-Ingress: Manages external access to services, typically HTTP, providing routing and load balancing.
-How They Work Together
-Deployments manage the lifecycle of Pods, ensuring the correct number of Pods are running and handling updates.
-ReplicaSets are created and managed by Deployments to maintain the desired number of Pods.
-Services provide a stable endpoint for accessing the Pods managed by Deployments, abstracting the underlying Pod IPs and enabling load balancing.
-Pods are the fundamental units of execution, running your application containers.
-In essence, these components work together to create a robust and scalable system for deploying and managing containerized applications in Kubernetes.
+Kubernetes provides built-in mechanisms for service discovery, so applications can find and communicate with other services without hardcoding IP addresses.
+
+Types of Services:
+
+ClusterIP : The Service is only accessible within the Kubernetes cluster. It’s used for communication between different services within the cluster.
+
+NodePort : This allows the Service to be accessed from outside the cluster by requesting <NodeIP>:<NodePort>. This type is often used for simple testing and debugging.
+
+LoadBalancer : Creates an external load balancer (e.g., from cloud providers like AWS, GCP, Azure) and assigns a public IP to the Service. This allows the Service to be accessed from outside the cluster using that public IP. It’s often used in production environments.
+
+Headless Service : When you don’t need load balancing or a cluster IP, you can create a headless Service by setting the clusterIP field to None. This allows direct access to the Pods without load balancing, useful for stateful applications.
+
+Services use selectors to determine which Pods belong to the Service. 
+selector : Specifies that the Service will route traffic to Pods with the label app: my-app
+
+
+Deployment is a higher-level abstraction that manages ReplicaSets and Pods. Deployments provide version control and history for your application, making it easy to roll back to previous versions if needed.
+Deployments support rolling updates, allowing you to update your application with zero downtime. Kubernetes gradually replaces old Pods with new ones according to the update strategy you specify.
+If a new update causes issues, you can roll back to a previous version of your application. Kubernetes maintains a history of revisions, making it easy to revert to a stable state.
+Deployments allow you to scale the number of replicas (Pods) up or down easily.
 
 
 Kubernetes uses a flat network model where every Pod gets its own IP address. Pods communicate directly with each other using their IP addresses, 
 
-
+Cluster is a set of machines (nodes) that work together to run containerized applications. The cluster consists of a control plane(Master Node) and a set of worker nodes, and it provides the environment needed to deploy, manage, and scale applications.
 What are the main components of Kubernetes architecture?
 - Master Node: The node that manages the cluster. It includes:
 
@@ -3168,14 +3149,243 @@ What are the main components of Kubernetes architecture?
 	
 	- etcd: A distributed key-value store that holds all the configuration data and state of the Kubernetes cluster.  When we make changes to the cluster (e.g., deploying an application or scaling a service), the API Server updates the state in etcd.  This allows Kubernetes to recover from failures by restoring the cluster state from etcd.
 
-- Worker Nodes: Run application containers and include:
+- Worker Nodes: worker node refers to a machine (virtual or physical) that runs the applications and workloads in your Kubernetes cluster. On AWS, worker nodes are typically Amazon EC2 instances that are part of your Kubernetes cluster.
+Kubernetes Components on Worker Nodes: 
 	- Kubelet: An agent that ensures containers are running in Pods.  The Kubelet communicates with the API Server to get the desired state of Pods. It then makes sure that the containers in those Pods are running as expected. If a container fails or crashes, the Kubelet will restart it to maintain the desired state. It also collects and reports metrics about the Node and the Pods running on it.
 
 	- Kube-Proxy: Maintains network rules and load-balances traffic to Pods. Kube-Proxy manages network traffic routing by maintaining iptables or IPVS rules on Nodes. This ensures that network traffic is properly directed to the Pods. For example, if a Service exposes multiple Pods, Kube-Proxy ensures that traffic is distributed evenly across these Pods.
 
 	- Container Runtime: Software that runs and manages containers (e.g., Docker, containerd).
 
+We can scale a cluster by adding or removing worker nodes as needed to handle varying workloads.
 
+AWS provides a managed Kubernetes service called EKS. When you create an EKS cluster, you can specify the EC2 instance types and configurations for your worker nodes.
+
+Elastic Load Balancing (ELB): Kubernetes services that are exposed as LoadBalancer types, can use AWS ELB to provide external access and distribute traffic to the worker nodes.
+
+Amazon EBS: For persistent storage, you can use Amazon Elastic Block Store (EBS) volumes that are attached to worker nodes.
+
+Helm is a package manager for Kubernetes that simplifies the deployment, management, and versioning of applications and services on a Kubernetes cluster.
+
+A Helm chart is a collection of Kubernetes YAML files organized into a directory structure that defines a Kubernetes application. It includes everything needed to run an application, such as deployments, services, ingress configurations, and more.
+
+Helm is installed on your local machine or CI/CD pipeline and communicates with your Kubernetes cluster to deploy and manage applications.
+
+A typical Helm chart directory includes
+Chart.yaml: Contains metadata about the chart, such as its name, version, and description.
+values.yaml: A file containing default configuration values that can be overridden by the user.
+templates/: A directory with Kubernetes manifest templates that Helm will use to generate Kubernetes resources.
+charts/: A directory where dependent charts can be stored.
+README.md: Documentation about the chart.
+
+Helm can install, upgrade, rollback, and delete releases. Each release can be upgraded or rolled back independently of others.
+
+
+#### To deploy a Go (Golang) application on Amazon EKS (Elastic Kubernetes Service) with load balancing:
+
+Install AWS CLI
+Install kubectl
+Install eksctl
+Install Docker
+Create the EKS Cluster Using eksctl
+```bash
+eksctl create cluster \
+  --name my-cluster \
+  --region us-west-2 \
+  --nodes 3 \
+  --node-type t3.medium \
+  --with-oidc \
+  --ssh-access \
+  --ssh-public-key ~/.ssh/id_rsa.pub
+```
+Update kubectl Context
+aws eks --region us-west-2 update-kubeconfig --name my-cluster
+
+
+You can use MongoDB as a managed service (e.g., MongoDB Atlas) or deploy it directly on EKS.
+Create a MongoDB Deployment YAML File
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:latest
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+      volumes:
+      - name: mongodb-data
+        emptyDir: {}
+```
+Create a MongoDB Service YAML File
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017
+  type: ClusterIP
+```
+Apply MongoDB Resources
+kubectl apply -f mongodb-deployment.yaml
+kubectl apply -f mongodb-service.yaml
+
+
+Create Your Go Application: Example main.go
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "net/http"
+    "github.com/gin-gonic/gin"
+    "go.mongodb.org/mongo-driver/mongo"
+    "go.mongodb.org/mongo-driver/mongo/options"
+)
+
+var client *mongo.Client
+
+func init() {
+    var err error
+    clientOptions := options.Client().ApplyURI("mongodb://mongodb-service:27017")
+    client, err = mongo.Connect(context.TODO(), clientOptions)
+    if err != nil {
+        log.Fatal(err)
+    }
+}
+
+func handler(c *gin.Context) {
+    collection := client.Database("testdb").Collection("testcollection")
+    result := collection.FindOne(context.TODO(), map[string]string{"hello": "world"})
+    var res map[string]string
+    err := result.Decode(&res)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, res)
+}
+
+func main() {
+    r := gin.Default()
+    r.GET("/", handler)
+    r.Run(":8080")
+}
+```
+Create a Dockerfile
+```
+# Use the official Golang image to build the app
+FROM golang:1.20 AS builder
+
+# Set the Current Working Directory inside the container
+WORKDIR /app
+
+# Copy the source code into the container
+COPY . .
+
+# Build the Go app
+RUN go build -o myapp
+
+# Start a new stage from scratch
+FROM alpine:latest
+
+# Set the Current Working Directory inside the container
+WORKDIR /root/
+
+# Copy the Pre-built binary file from the previous stage
+COPY --from=builder /app/myapp .
+
+# Expose port 8080 to the outside world
+EXPOSE 8080
+
+# Command to run the executable
+CMD ["./myapp"]
+```
+Build the Docker Image
+docker build -t my-go-app:latest .
+
+
+Push the Docker Image to ECR
+Create an ECR Repository
+aws ecr create-repository --repository-name my-go-app --region us-west-2
+Authenticate Docker to ECR
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-west-2.amazonaws.com
+
+
+Tag and Push the Docker Image
+docker tag my-go-app:latest <account-id>.dkr.ecr.us-west-2.amazonaws.com/my-go-app:latest
+docker push <account-id>.dkr.ecr.us-west-2.amazonaws.com/my-go-app:latest
+
+Deploy Your Application to EKS
+Create a Deployment YAML File
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-go-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-go-app
+  template:
+    metadata:
+      labels:
+        app: my-go-app
+    spec:
+      containers:
+      - name: my-go-app
+        image: <account-id>.dkr.ecr.us-west-2.amazonaws.com/my-go-app:latest
+        ports:
+        - containerPort: 8080
+```
+Apply the Deployment
+kubectl apply -f deployment.yaml
+
+Create a Service YAML File with Load Balancing
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-go-app-service
+spec:
+  selector:
+    app: my-go-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+```
+Apply the Service
+kubectl apply -f service.yaml
+
+Get the External IP Address:
+kubectl get services
+Look for the EXTERNAL-IP of the my-go-app-service
+------------------------------------------------------
+POD yaml
 ```yaml
 apiVersion: v1
 kind: Pod
