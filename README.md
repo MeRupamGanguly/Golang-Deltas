@@ -6,33 +6,49 @@ I have a background in B.Tech IT and passout of	 2020. After college, I joined S
 ### What projects do you woked on Sensibol, describe: 
 I worked on PDL (Phonographic Digital Limited), a music distribution and royalty management platform. 
 
-Additionally, I worked on Singshala, which is similar to TikTok but with extra feature of analyzing the audio components of videos and providing rankings based on the analysis. 
+And, I also worked on Singshala, which is similar to TikTok but with extra feature of analyzing the audio components of videos and providing rankings based on the analysis. 
 
-Both projects used Golang, MongoDB, Redis, AWS S3, SQS, SNS, Lambda, etc. Both had microservices architectures. PDL transitioned from a domain-driven approach to an event-driven one, while Singshala was domain-driven and complete. 
+Both projects used Event Driven microservices architectures.
 
-Since Sensibol is very conservative regarding hiring, only three backend developers worked on both the projects, so my involvement was extensive.
+I last used PostgreSQL in college, but I have been using MongoDB extensively at work.
 
 ### Microservices vs Monolith:
 Microservices are better for large projects where scaling and almost zero downtime are required. Bug fixing and maintaining the codebase are easier. A disadvantage of microservices can be inter-service network calls.
 
 ### Authentication vs  Authorization:
-Authentication is about verifying identity. Users typically provide credentials such as a username and password, biometric data (like fingerprints or facial recognition), or security tokens. The system checks these credentials against stored data to confirm their validity.
+Authentication is about verifying identity. Users typically provide credentials such as a username and password, biometric data The system checks these credentials against stored data to confirm their validity.
 
-Authorization is about granting permissions based on that verified identity. Once authenticated, the system checks the user’s permissions and roles to determine what they can access or modify. Authorization policies might be based on roles, permissions, or other criteria.
+Authorization is about granting permissions based on that verified identity. The system checks the user’s permissions and roles to determine what they can access or modify. 
 
 ### Golang Garbage Collection:
 Golang uses automatic garbage collection to manage memory. Developers do not need to allocate or deallocate memory manually, which reduces memory-related errors.
 
 ### Pointer:
-Pointer is a Memory address of the Variable or Struct or Function or any kind of Data type.
-Pointer can Referenced and Dereferenced by * &
-&a gets the memory address of the variable a.
-*p accesses the value stored at the memory address pointed to by p.
+A pointer holds the memory address of a variable, struct, function, or any data type.
 
-#1256 Memory address of a
-a:=9
-p:=&a // P contains the Memory adress of a // Referencing
-*p // Dereferencing
+- You can reference a variable to get its address using the & operator.
+
+- You can dereference a pointer to access the value at the memory address it points to using the * operator.
+```go
+package main
+
+import "fmt"
+
+func main() {
+    a := 9           // Declare an integer variable 'a'
+    p := &a         // 'p' is a pointer that stores the address of 'a' (referencing)
+
+    fmt.Println("Address of a:", &a)    
+	// Outputs the memory address of 'a'
+    fmt.Println("Value of p:", p)       
+	// Outputs the memory address stored in p
+    fmt.Println("Value at address p:", *p) 
+	// Dereferencing p to get the value (outputs: 9)
+
+    *p = 10         // Change the value of 'a' using the pointer
+    fmt.Println("New value of a:", a)   // Outputs: New value of a: 10
+}
+```
 
 ### Goroutine vs Thread:
 Goroutines are designed for concurrency, meaning multiple tasks can run using context switching. Threads are designed for parallelism, meaning multiple tasks can run simultaneously on multiple CPU cores.
@@ -170,6 +186,48 @@ func main() {
 		go consumer(&m, &wg, &mu)
 	}
 	wg.Wait()
+}
+```
+
+### Describe Channel comunication
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func print(wg *sync.WaitGroup) {
+	defer wg.Done() // Decrement the counter when the goroutine completes
+	fmt.Println("msg")
+}
+
+func main() {
+	wg := sync.WaitGroup{}
+	wg.Add(1)     // Increment the counter for the goroutine
+	go print(&wg) // Start the goroutine
+	wg.Wait()     // Wait for the goroutine to finish
+}
+```
+
+```go
+func producer(ch chan<-int){ //ch <- value // Sends value into channel ch
+	for i:=0;i<5;i++{
+		ch<-i
+	}
+	close(ch)
+}
+func consumer(ch <-chan int){ //value := <-ch // Receives from channel ch and assigns it to value
+	for n:=range ch{
+		fmt.Print("RECV: ",num)
+	}
+}
+for main(){
+	ch:=make(chan int)
+	go producer(ch)
+	consumer(ch)
 }
 ```
 ### Describe Channel comunication with task distributions:
@@ -556,7 +614,6 @@ func NewService() *Counter {
 
 type service interface {
 	Get(ctx context.Context, id string) (int, error)
-	Add(ctx context.Context, c Counter) error
 }
 
 // Transport Layer  --------------------------
@@ -638,13 +695,7 @@ type getResponse struct {
 	Count   int  `json:"count"`
 	Success bool `json:"success"`
 }
-type addRequest struct {
-	Counter Counter `json:"counter"`
-}
 
-type addResponse struct {
-	Success bool `json:"success"`
-}
 
 // Get handler retrieves data based on the ID
 func (trans *transport) Get(w http.ResponseWriter, r *http.Request) {
@@ -665,18 +716,6 @@ func (trans *transport) Get(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(getResponse{Success: true, Count: data})
 }
-func (trans *transport) Add(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	req := addRequest{}
-	json.NewDecoder(r.Body).Decode(&req)
-	err := trans.svc.Add(context.Background(), req.Counter)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	json.NewEncoder(w).Encode(addResponse{Success: true})
-}
 
 // Service Layer  --------------------------
 
@@ -685,19 +724,345 @@ func (svc *Counter) Get(ctx context.Context, id string) (int, error) {
 	return svc.Count, nil
 }
 
-// Add increments the counter
-func (svc *Counter) Add(ctx context.Context, c Counter) error {
-	svc.Count += c.Count
-	return nil
-}
 //  --------------------------
 func main() {
 	r := mux.NewRouter()
 	svc := NewService()
 	ts := NewTransport(svc)
 	r.HandleFunc("/get", ts.Get).Methods("GET")
-	r.HandleFunc("/add", ts.Add).Methods("POST")
 	http.ListenAndServe(":5000", r)
+}
+```
+
+## Prometheus and Grafana
+Prometheus is a monitoring and alerting toolkit used for recording real-time metrics like, Counter: requestsTotal counts total requests, labeled by HTTP method. Gauge: currentUsers tracks the number of active users. Histogram: requestDuration measures the duration of requests, also labeled by method. Summary: responseSize records the size of responses.
+
+Grafana is an open-source visualization tool that enables users to create interactive and customizable dashboards for monitoring and analyzing metrics. 
+
+Prometheus uses service discovery mechanisms to automatically detect new instances as they scale up or down.
+
+Prometheus scrapes metrics directly from each instance, which requires each application to expose metrics on a specified endpoint.
+
+Instead of scraping individual instances, Prometheus can scrape metrics from the ALB, which balances traffic among all instances. This provides a centralized endpoint for metrics collection.
+
+```go
+package main
+
+import (
+    "net/http"
+    "github.com/prometheus/client_golang/prometheus"
+    "github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var (
+    requestsTotal = prometheus.NewCounterVec(
+        prometheus.CounterOpts{
+            Name: "requests_total",
+            Help: "Total number of requests",
+        },
+        []string{"method"},
+    )
+
+    currentUsers = prometheus.NewGauge(
+        prometheus.GaugeOpts{
+            Name: "current_users",
+            Help: "Current number of active users",
+        },
+    )
+)
+
+func init() {
+    prometheus.MustRegister(requestsTotal)
+    prometheus.MustRegister(currentUsers)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    requestsTotal.WithLabelValues(r.Method).Inc()
+    currentUsers.Set(10) // Simulate current users
+
+    timer := prometheus.NewTimer(requestDuration.WithLabelValues(r.Method))
+    defer timer.ObserveDuration()
+
+    responseSize.WithLabelValues(r.Method).Observe(256.0) // Simulated response size
+    w.Write([]byte("Hello, World!"))
+}
+
+func main() {
+    http.HandleFunc("/", handler)
+    http.Handle("/metrics", promhttp.Handler())
+    http.ListenAndServe(":8080", nil)
+}
+```
+Deploy your Go application on multiple EC2 instances. Ensure the application is accessible and exposing metrics at the /metrics endpoint.
+
+Create an Application Load Balancer with target group that points to your EC2 instances.
+
+Download and install Prometheus.
+
+```yaml
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'go_app'
+    static_configs:
+      - targets: ['<ALB_DNS_NAME>/metrics']
+```
+
+```bash
+./prometheus --config.file=prometheus.yml
+```
+
+Check http://localhost:9090/targets to ensure the ALB is scraping metrics correctly.
+
+Download and install Grafana.
+
+Start Grafana (usually on port 3000):
+./bin/grafana-server web
+
+Add Prometheus as a Data Source.
+
+
+## GRPC
+- gRPC uses HTTP/2 and binary serialization (Protocol Buffers) for high performance and efficiency, It supports bi-directional streaming.
+- REST relies on HTTP/1.1 and text-based formats like JSON, offering simplicity and ease of use for web applications. REST is stateless and leverages standard HTTP methods, making it widely adopted and easy to debug. 
+- Choose gRPC if you need high performance, efficient binary serialization, and streaming capabilities, especially in microservices.
+- Choose REST if you prefer simplicity, human readability, and a stateless architecture that is widely supported.
+
+
+```proto
+syntax = "proto3";
+
+package chat;
+
+service Chat {
+
+  rpc ServerStream (Message) returns (stream Message);
+
+
+  rpc ClientStream (stream Message) returns (Message);
+
+
+  rpc StreamChat (stream Message) returns (stream Message);
+}
+
+
+message Message {
+  string sender = 1;
+  string content = 2;
+}
+
+```
+- The Chat service contains three RPC methods.
+- The Message message type contains two fields: sender (to indicate who sent the message) and content (the message text).
+
+To generate the Go code from this .proto file, use the following command:
+```bash
+protoc --go_out=. --go-grpc_out=. chat.proto
+```
+```go
+package main
+
+import (
+    "io"
+    "log"
+    "net"
+    "time"
+
+    "golang.org/x/net/context"
+    "google.golang.org/grpc"
+    pb "path/to/your/chat" // Adjust the import path
+)
+
+// Server struct
+type server struct {
+    pb.UnimplementedChatServer
+}
+
+// Server-side streaming method
+func (s *server) ServerStream(req *pb.Message, stream pb.Chat_ServerStreamServer) error {
+    for i := 0; i < 5; i++ {
+        stream.Send(&pb.Message{Sender: "Server", Content: req.Content + " " + time.Now().String()})
+        time.Sleep(time.Second)
+    }
+    return nil
+}
+
+// Client-side streaming method
+func (s *server) ClientStream(stream pb.Chat_ClientStreamServer) error {
+    var messages []string
+    for {
+        msg, err := stream.Recv()
+        if err == io.EOF {
+            break
+        }
+        messages = append(messages, msg.Content)
+    }
+    stream.SendAndClose(&pb.Message{Sender: "Server", Content: "Received: " + fmt.Sprint(messages)})
+    return nil
+}
+
+// Bidirectional streaming method
+func (s *server) StreamChat(stream pb.Chat_StreamChatServer) error {
+    for {
+        msg, err := stream.Recv()
+        if err == io.EOF {
+            break
+        }
+        stream.Send(&pb.Message{Sender: "Server", Content: "Echo: " + msg.Content})
+    }
+    return nil
+}
+
+func main() {
+    lis, _ := net.Listen("tcp", ":50051")
+    s := grpc.NewServer()
+    pb.RegisterChatServer(s, &server{})
+    go s.Serve(lis)
+
+    conn, _ := grpc.Dial("localhost:50051", grpc.WithInsecure())
+    client := pb.NewChatClient(conn)
+
+    // Client-side streaming
+    clientStream, _ := client.ClientStream(context.Background())
+    for i := 0; i < 3; i++ {
+        clientStream.Send(&pb.Message{Content: "Client message " + fmt.Sprint(i)})
+    }
+    clientStream.CloseSend()
+
+    // Server-side streaming
+    serverStream, _ := client.ServerStream(context.Background(), &pb.Message{Content: "Hello!"})
+    for {
+        msg, err := serverStream.Recv()
+        if err != nil {
+            break
+        }
+        log.Println(msg.Content)
+    }
+
+    // Bidirectional streaming
+    bidiStream, _ := client.StreamChat(context.Background())
+    go func() {
+        for i := 0; i < 3; i++ {
+            bidiStream.Send(&pb.Message{Content: "Bidirectional message " + fmt.Sprint(i)})
+            time.Sleep(time.Second)
+        }
+        bidiStream.CloseSend()
+    }()
+    for {
+        msg, err := bidiStream.Recv()
+        if err != nil {
+            break
+        }
+        log.Println(msg.Content)
+    }
+}
+```
+Summary of Steps
+- Define the Server: A server struct implements the ChatServer interface, with three methods for server-side streaming, client-side streaming, and bidirectional streaming.
+- Implement Streaming Methods: The ServerStream method sends multiple messages back to the client; the ClientStream method collects messages from the client and sends a summary; and StreamChat handles both incoming and outgoing messages simultaneously.
+- Set Up the gRPC Server: The main function creates a listener on port 50051, registers the server, and starts serving in a separate goroutine.
+- Create and Use a gRPC Client: The client connects to the server and demonstrates client-side streaming by sending messages, server-side streaming by receiving multiple messages, and bidirectional streaming in a separate goroutine.
+- Run the Server and Client: The entire setup allows for real-time message exchange, showcasing the flexibility of gRPC for various streaming patterns within a single file.
+
+### GIN Framework
+
+Choose Gin if you need a high-performance framework with built-in features, ease of use, and a rich set of functionalities, making it ideal for building APIs and web applications quickly.
+Choose Gorilla Mux if you prefer a flexible routing library that allows for more manual control over your application’s architecture and routing logic, especially for larger projects where complex routing patterns are required.
+
+1. Routing
+Gin uses a powerful router to handle HTTP requests. You define routes using gin.Default() or gin.New(), allowing you to specify the HTTP method and the path.
+Example:
+```go
+router := gin.Default()
+router.GET("/ping", func(c *gin.Context) {
+    c.JSON(200, gin.H{"message": "pong"})
+})
+```
+2. Middleware
+Middleware functions can be added to the Gin router for processing requests before they reach your handler functions. This is useful for logging, authentication, and other cross-cutting concerns.
+Example:
+
+```go
+package main
+
+import (
+    "github.com/gin-gonic/gin"
+    "net/http"
+)
+
+// Logging Middleware
+func Logger() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        // Before request
+        log := "Request: " + c.Request.Method + " " + c.Request.URL.String()
+        c.Set("log", log) // Store log in context
+
+        // Process request
+        c.Next() // Call the next middleware/handler
+
+        // After request
+        log += " | Status: " + http.StatusText(c.Writer.Status())
+        println(log) // Print the log to console
+    }
+}
+
+// Authentication Middleware
+func AuthMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        token := c.Request.Header.Get("Authorization")
+        if token == "" {
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+            c.Abort() // Stop the request
+            return
+        }
+        // Assume token is valid
+        c.Next() // Proceed to the next middleware or handler
+    }
+}
+
+// Example Handler
+func serviceHandler(c *gin.Context) {
+    log := c.MustGet("log").(string) // Retrieve the log from context
+    c.JSON(http.StatusOK, gin.H{"message": "Access granted", "log": log})
+}
+
+func main() {
+    router := gin.Default()
+
+    // Apply multiple middleware functions to a route
+    router.GET("/service", Logger(), AuthMiddleware(), serviceHandler)
+
+    router.Run(":8080")
+}
+```
+
+3. Context
+Each request is processed using a Context object, which contains methods and properties for handling request and response data. It provides access to parameters, query strings, and more.
+Example:
+```go
+
+name := c.Param("name") // Access route parameters
+c.JSON(200, gin.H{"name": name})
+```
+4. JSON Handling
+Gin makes it easy to work with JSON. You can bind incoming JSON requests to structs and send JSON responses with built-in methods.
+Example:
+```go
+
+var jsonData MyStruct
+if err := c.ShouldBindJSON(&jsonData); err == nil {
+    c.JSON(200, jsonData)
+}
+```
+5. Error Handling
+Gin provides built-in error handling. You can use the c.Error method to log errors and handle them gracefully in your application.
+Example:
+```go
+
+if err != nil {
+    c.Error(err) // Log and handle error
+    return
 }
 ```
 
@@ -2128,7 +2493,7 @@ update := bson.M{
 }
 result, err := collection.UpdateOne(context.TODO(), filter, update)
 ```
-## Module 4: GRPC
+
 ## Module 5: RabitMQ
 
 Setting Up RabbitMQ
