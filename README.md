@@ -16,7 +16,7 @@ I last used PostgreSQL in college, but I have been using MongoDB extensively at 
 Microservices are better for large projects where scaling and almost zero downtime are required. Bug fixing and maintaining the codebase are easier. A disadvantage of microservices can be inter-service network calls.
 
 ### Authentication vs  Authorization:
-Authentication is about verifying identity. Users typically provide credentials such as a username and password, biometric data The system checks these credentials against stored data to confirm their validity.
+Authentication is about verifying identity. Users typically provide credentials such as a username and password, or biometric data, and The system checks these credentials against stored data to confirm their validity.
 
 Authorization is about granting permissions based on that verified identity. The system checks the user’s permissions and roles to determine what they can access or modify. 
 
