@@ -832,7 +832,7 @@ func generateRandomArray(size int) []int {
 ```
 
 
-## HR Round and Managerial Round:
+## Module 2: HR Round and Managerial Round:
 ### Tell me about yourself
 I am a Golang developer with 3.3 years of experience in backend development. I enjoy building scalable apps and have a strong background in microservices. I’m passionate about clean code and passionated about always learning to stay updated with industry trends.
 
