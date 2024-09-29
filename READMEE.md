@@ -426,7 +426,7 @@ func arrGen() []int {
 }
 ```
 ### Select Statement
-Imagine we have 3 S3 buckets and uploading one file to all 3 S3 buckets. We have to generate a signed URL for Stream the file, once at least one upload completes we can stream and other Uploads will continue. In this scenerio Select statement used.
+Assume a development scenerio where we have 3 s3 Buckets. We spawn 3 GO-Routines each one uploading a File on each S3 bucket at same time. We have to Return SignedUrl of the file so user can stream the File as soon as possible. Now we do not have to wait for 3 S3 Upload operation, when one s3 upload done we can send the SignedUrl of the File to the User so he can Stream. And Other two S3 Upload will continue at same time. This is the Scenerio when Select Statement can help.
 
 Select statement is used for Concurency comunication between multiple goroutines. Select have multiple Case statement related to channel operations. Select block the execution unitl one of its case return. If multiple case returns at same time, then one random case is selected for returns. If no case is ready and there's a default case, it executes immediately. If there's no default case, select blocks until at least one case is ready.
 ```go
@@ -830,9 +830,354 @@ func generateRandomArray(size int) []int {
 	return arr
 }
 ```
+## Module 2: AWS:
+### Theory
+- AWS IAM (Identity and Access Management) helps you manage who can access your resources in Amazon Web Services. You can create users, groups, and roles to control permissions. This means you can decide who can do what, like viewing or changing files. IAM also allows for secure sign-in using passwords and multi-factor authentication. Overall, it helps keep your AWS environment safe and organized.
 
+- An AWS User Group is a collection of users that you can manage together. It helps you organize users who need similar access permissions. By assigning permissions to the group, you simplify managing user access. When you add a user to the group, they automatically get those permissions. This makes it easier to keep everything organized and secure in AWS.
 
-## Module 2: HR Round and Managerial Round:
+- AWS SG, or Security Group, acts like a virtual firewall for your Amazon Web Services resources. It controls what traffic can enter or leave your instances. You can set rules based on IP addresses, protocols, and ports. This helps protect your applications from unwanted access. Security Groups are easy to manage and can be adjusted anytime as your needs change.
+
+- You use AWS Security Groups with services like EC2 (Elastic Compute Cloud) to control access to virtual servers. They also work with RDS (Relational Database Service) to protect your databases from unauthorized access. For AWS Lambda functions, Security Groups help manage network access when they connect to other services. Additionally, you can use them with Elastic Load Balancers to ensure traffic is properly filtered. Overall, Security Groups are important for securing various AWS resources and services.
+
+- An AWS Availability Zone is a separate location within a region that has its own power, cooling, and networking. Each zone is designed to be isolated from failures in other zones. This means if one zone goes down, your applications can still run in another zone. Using multiple Availability Zones helps improve the reliability and availability of your services. It's a key part of building resilient cloud applications in AWS.
+
+- An Application Load Balancer (ALB) distributes incoming application traffic across multiple targets, like EC2 instances or containers. It operates at the application layer, allowing it to route requests based on content, such as URL paths and HTTP headers. ALB performs health checks on registered targets to ensure that traffic is only sent to healthy instances. It can also handle SSL termination, reducing the load on backend servers. Overall, ALB enhances application performance, scalability, and reliability.
+
+- An Auto Scaling Group (ASG) in AWS automatically adjusts the number of EC2 instances based on demand. It can scale out by adding instances when traffic increases and scale in by removing instances during low demand. ASGs perform health checks to replace any unhealthy instances, ensuring reliability. You can configure scaling policies based on metrics like CPU usage or set scheduled scaling for predictable traffic patterns. Overall, ASGs help maintain application performance while optimizing costs.
+
+- Amazon S3 (Simple Storage Service)
+Amazon S3 is a scalable object storage service that allows you to store and retrieve any amount of data from anywhere on the web. It ensures durability and security with features like versioning and lifecycle policies, organizing data in buckets. Common uses include backups, static website hosting, and big data analytics, all under a pay-as-you-go pricing model. S3 offers various storage classes to optimize cost and performance, including S3 Standard for frequently accessed data and S3 Intelligent-Tiering, which adjusts based on access patterns. S3 Glacier and S3 Glacier Deep Archive provide cost-effective options for long-term archival storage with longer retrieval times.
+
+- Amazon SQS (Simple Queue Service)
+Amazon SQS is a fully managed message queuing service that decouples and scales microservices and applications. It enables sending, storing, and receiving messages between components without loss, supporting standard queues for high throughput and FIFO queues for ordered processing. SQS ensures reliable message processing and handles workload spikes, making it ideal for asynchronous communication.
+
+- Amazon SNS (Simple Notification Service)
+Amazon SNS is a fully managed messaging service for sending notifications to multiple subscribers, including applications and devices. It supports various communication methods like SMS, email, and push notifications and allows the creation of topics for efficient message broadcasting. SNS can trigger workflows and alerts in real time, integrating well with other AWS services for event-driven architectures.
+
+- AWS Lambda
+AWS Lambda is a serverless computing service that runs your code without requiring server management. You simply upload your code, and Lambda handles execution, scaling, and availability. It supports various programming languages and can be triggered by events from other AWS services, making it ideal for event-driven applications and APIs. You pay only for the compute time used, making it cost-effective for variable workloads.
+
+- Amazon Route 53 is a scalable DNS web service that translates domain names into IP addresses. It routes internet traffic to resources like websites by directing users to the nearest server based on latency or location. Route 53 includes health checks to monitor resource availability and reroutes traffic from unhealthy endpoints. It also supports domain registration, simplifying the management of domain names and DNS settings.
+
+### Deploying Go Applications on AWS
+#### Step 1: Build Your Go Applications
+```bash
+GOOS=linux GOARCH=amd64 go build -o apigateway
+GOOS=linux GOARCH=amd64 go build -o user
+GOOS=linux GOARCH=amd64 go build -o order
+```
+#### Step 2: Launch an EC2 Instance and Configure Security Group to allow:
+HTTP (port 80): Source: Anywhere
+
+HTTPS (port 443): Source: Anywhere
+
+SSH (port 22): Source: Your IP
+
+#### Step 3: Connect to Your EC2 Instance
+```bash
+ssh -i your-key.pem ec2-user@your-instance-ip
+```
+#### Step 4: Transfer Your Go Binaries
+```bash
+scp -i your-key.pem apigateway ec2-user@your-instance-ip:/usr/local/bin/
+scp -i your-key.pem user ec2-user@your-instance-ip:/usr/local/bin/
+scp -i your-key.pem order ec2-user@your-instance-ip:/usr/local/bin/
+```
+#### Step 5: Create a Systemd Service
+Create a script to start all services:
+```bash
+sudo nano /usr/local/bin/start_all_services.sh
+```
+```bash
+#!/bin/bash
+/usr/local/bin/apigateway &
+/usr/local/bin/user &
+/usr/local/bin/order &
+wait
+```
+Make it executable:
+`sudo chmod +x /usr/local/bin/start_all_services.sh`
+
+Create a systemd service:
+`sudo nano /etc/systemd/system/all_services.service`
+```bash
+[Unit]
+Description=All Go Services
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/start_all_services.sh
+Restart=always
+User=ec2-user
+
+[Install]
+WantedBy=multi-user.target
+```
+Start and enable the service:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl start all_services
+sudo systemctl enable all_services
+```
+#### Step 6: Set Up an Application Load Balancer (ALB)
+Choose ALB and configure basic settings.
+
+Add listeners for HTTP and/or HTTPS.
+
+Create target groups for each service with health check paths:  
+API Gateway: /api  
+User Service: /user  
+Order Service: /order  
+
+Register your EC2 instance to each target group.
+#### Step 7: Update Security Groups
+Allow inbound traffic from the ALB's security group to the EC2 instance.
+
+#### Step 8: Configure ALB Routing Rules
+Set routing rules in the ALB:
+
+Route /api/* to the API Gateway
+
+Route /user/* to the User service
+
+Route /order/* to the Order service
+#### Step 9: Scaling and Load Management (Optional)
+Create Auto Scaling Groups for each service in the EC2 Console.
+Attach the corresponding target groups and define scaling policies based on CPU utilization.
+
+### S3 large file SNS SQS Operations example
+This Go program demonstrates how to upload a file to an Amazon S3 bucket, send a message to an Amazon SQS queue, and publish a notification to an Amazon SNS topic
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
+)
+
+const (
+	bucketName  = "your-s3-bucket-name"
+	sqsQueueUrl = "https://sqs.region.amazonaws.com/account-id/your-queue-name"
+	snsTopicArn = "arn:aws:sns:region:account-id:your-topic-name"
+	filePath    = "path/to/your/large-file.mp3" // Update this to your large file path
+)
+
+func main() {
+	ctx := context.Background()
+
+	// Load AWS config
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("your-region"))
+	if err != nil {
+		log.Fatalf("unable to load SDK config, %v", err)
+	}
+
+	// Create S3 client
+	s3Client := s3.NewFromConfig(cfg)
+
+	// Upload the file
+	err = uploadFileToS3(ctx, s3Client, filePath)
+	if err != nil {
+		log.Fatalf("failed to upload file, %v", err)
+	}
+
+	// Create SQS client
+	sqsClient := sqs.NewFromConfig(cfg)
+
+	// Send message to SQS
+	err = sendMessageToSQS(ctx, sqsClient, filePath)
+	if err != nil {
+		log.Fatalf("failed to send message to SQS, %v", err)
+	}
+
+	// Create SNS client
+	snsClient := sns.NewFromConfig(cfg)
+
+	// Publish notification to SNS
+	err = publishToSNS(ctx, snsClient, "File uploaded to S3: "+filePath)
+	if err != nil {
+		log.Fatalf("failed to publish to SNS, %v", err)
+	}
+}
+
+func uploadFileToS3(ctx context.Context, client *s3.Client, filePath string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open file %q, %v", filePath, err)
+	}
+	defer file.Close()
+
+	// Upload the file
+	_, err = client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      &bucketName,
+		Key:         aws.String(file.Name()),
+		Body:        file,
+		ContentType: aws.String("audio/mpeg"),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upload to S3, %v", err)
+	}
+
+	fmt.Printf("Successfully uploaded %q to bucket %q\n", file.Name(), bucketName)
+	return nil
+}
+
+func sendMessageToSQS(ctx context.Context, client *sqs.Client, messageBody string) error {
+	_, err := client.SendMessage(ctx, &sqs.SendMessageInput{
+		QueueUrl:    &sqsQueueUrl,
+		MessageBody: aws.String(messageBody),
+	})
+	return err
+}
+
+func publishToSNS(ctx context.Context, client *sns.Client, message string) error {
+	_, err := client.Publish(ctx, &sns.PublishInput{
+		Message:  aws.String(message),
+		TopicArn: &snsTopicArn,
+	})
+	return err
+}
+```
+This Go program is designed to run as an AWS Lambda function that processes messages from an Amazon SQS queue. The main goal of the function is to convert MP3 audio files stored in an S3 bucket into FLAC format. 
+
+```go
+package main
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"os"
+	"os/exec"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sns"
+)
+
+var (
+	s3Client *s3.S3
+	snsClient *sns.SNS
+	bucketName = "your-s3-bucket-name"
+	snsTopicArn = "arn:aws:sns:region:account-id:your-topic-name"
+)
+
+func init() {
+	sess := session.Must(session.NewSession())
+	s3Client = s3.New(sess)
+	snsClient = sns.New(sess)
+}
+
+func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
+	for _, message := range sqsEvent.Records {
+		mp3Key := message.Body
+
+		// Download the MP3 file from S3
+		mp3FilePath := fmt.Sprintf("/tmp/%s", mp3Key)
+		err := downloadFile(mp3Key, mp3FilePath)
+		if err != nil {
+			return fmt.Errorf("failed to download file: %w", err)
+		}
+
+		// Convert MP3 to FLAC
+		flacFilePath := fmt.Sprintf("/tmp/%s.flac", mp3Key[:len(mp3Key)-len(".mp3")])
+		err = convertToFlac(mp3FilePath, flacFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to convert to FLAC: %w", err)
+		}
+
+		// Upload the converted FLAC file back to S3
+		flacKey := fmt.Sprintf("%s.flac", mp3Key[:len(mp3Key)-len(".mp3")])
+		err = uploadFile(flacKey, flacFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to upload FLAC file: %w", err)
+		}
+
+		// Publish notification to SNS
+		err = publishToSNS(fmt.Sprintf("Successfully converted %s to FLAC and uploaded to S3.", mp3Key))
+		if err != nil {
+			return fmt.Errorf("failed to publish to SNS, %v", err)
+		}
+	}
+	return nil
+}
+
+func downloadFile(key, filepath string) error {
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = s3Client.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
+	}, out)
+	return err
+}
+
+func uploadFile(key, filepath string) error {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = s3Client.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
+		Body:   file,
+	})
+	return err
+}
+
+func convertToFlac(mp3FilePath, flacFilePath string) error {
+	cmd := exec.Command("/path/to/ffmpeg", "-i", mp3FilePath, flacFilePath)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("ffmpeg error: %v, stderr: %s", err, stderr.String())
+	}
+	return nil
+}
+
+func publishToSNS(message string) error {
+	_, err := snsClient.Publish(&sns.PublishInput{
+		Message:  aws.String(message),
+		TopicArn: aws.String(snsTopicArn),
+	})
+	return err
+}
+
+func main() {
+	lambda.Start(handler)
+}
+```
+Build your Go code for Linux.
+Zip the binary.
+Create an IAM role with the necessary permissions.
+Use the AWS CLI to upload your Lambda function.
+```bash
+aws lambda create-function --function-name your-function-name \
+  --zip-file fileb://function.zip \
+  --handler main \
+  --runtime go1.x \
+  --role arn:aws:iam::account-id:role/your-role-name
+```
+
+## Module 4: HR Round and Managerial Round:
 ### Tell me about yourself
 I am a Golang developer with 3.3 years of experience in backend development. I enjoy building scalable apps and have a strong background in microservices. I’m passionate about clean code and passionated about always learning to stay updated with industry trends.
 
