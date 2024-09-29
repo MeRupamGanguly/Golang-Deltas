@@ -459,29 +459,29 @@ func main() {
 ```
 
 ```go
-func uploadToS3(bucket string, wg *sync.WaitGroup, urls chan<- string) {
+func uploadToS3(bucket string, wg *sync.WaitGroup, ch chan<- string) {
 	defer wg.Done()
 	time.Sleep(time.Second)
-	urls <- fmt.Sprintf("https://%s.s3.amazonaws.com/file", bucket)
+	ch <- fmt.Sprintf("https://%s.s3.amazonaws.com/file", bucket)
 }
 
 func main() {
 	buckets := []string{"bucket1", "bucket2", "bucket3"}
 	var wg sync.WaitGroup
-	urls := make(chan string, len(buckets))
+	ch := make(chan string, len(buckets))
 
 	for _, bucket := range buckets {
 		wg.Add(1)
-		go uploadToS3(bucket, &wg, urls)
+		go uploadToS3(bucket, &wg, ch)
 	}
 	go func() {
 		wg.Wait()
-		close(urls)
+		close(ch)
 	}()
 	// Wait for the first completed upload
 	//  As soon as one of the goroutines finishes uploading to an S3 bucket and sends a signed URL through the urls channel, this case will be selected, and the url variable will be assigned that value. 
 	select {
-	case url := <-urls:
+	case url := <-ch:
 		fmt.Println("First completed upload URL:", url)
 	case <-time.After(5 * time.Second): // Optional timeout
 		fmt.Println("No uploads completed in time.")
