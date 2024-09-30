@@ -1166,6 +1166,45 @@ I am a Golang developer with 3.3 years of experience in backend development. I e
 ### What do you know about our company
 Calsoft is a software development company that focuses on cloud computing, storage, networking, and virtualization technologies.
 
+### Describe Projects
+PDL is a music streaming and royalty distribution platform with over 1,000 albums and 300 labels. PDL uploads albms to Spotify, iTunes, Resso, YouTube tc platforms.
+
+Singshala is a music app that focuses on providing a platform for artists to share their music and connect with audiences. And the main Features is Analyze the Audio and give user Ranking based their audio components.
+
+Both the Project use Golang Aws s3 sqs sns Lambda mongodb etc
+
+### Describe a challenging technical problem you've solved.
+PDL is a music streaming and royalty distribution platform with over 1,000 albums and 300 labels. To optimize its search functionality, I addressed performance issues caused by inefficient database indexing.
+
+Elasticsearch: I Use Elasticsearch as the search engine ,to enhance query performance.
+
+And Use Redis to store frequently accessed search results, reducing load on Elasticsearch.
+
+Instead of processing indexing updates synchronously, metadata changes were sent to an SQS queue, allowing Lambda to index data in real-time without affecting search speed.
+
+Benefits:
+Decoupling indexing from the main search service led to faster search results.
+
+The platform handle spikes in workload by scaling Lambda functions and SQS queues.
+
+Reliability: SQS ensured message delivery, even during disruptions.
+
+Cost Efficiency: Serverless architecture reduced costs by charging only for actual compute time and messaging throughput.
+
+### Roles and Responsibilty
+Design, develop, and maintain RESTful APIs to support frontend applications and third-party integrations.
+
+Implement efficient database schemas and queries, optimize database performance, and ensure data integrity.
+
+Use AWS services (Lambda, SQS) to manage asynchronous tasks, such as indexing updates and background processing.
+
+Optimize indexing and caching strategies (e.g., Redis) to enhance performance.
+
+Bug Fixes.
+
+### How i learn New technical Skills
+I love continuously learning new skills. To do this effectively, I set clear goals and break complex topics into smaller parts. I prefer hands-on practice through projects and collaborating with peers for different perspectives. Staying curious and regularly reviewing my knowledge helps me.
+
 ### Why did you choose Golang as your primary programming language
 I chose Golang because it's fast, simple, and great at handling multiple tasks at once. It’s perfect for building microservices and managing large systems.
 
